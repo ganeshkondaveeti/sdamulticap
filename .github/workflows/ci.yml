@@ -114,16 +114,17 @@ jobs:
           if (-not $exe) { throw "Inno Setup .exe not found under packaging\windows\Output\" }
           Write-Host "Installing $($exe.FullName) silently..."
           Start-Process -FilePath $exe.FullName -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/LOG=inno-install.log" -Wait -NoNewWindow
-          $installed = Join-Path $env:LOCALAPPDATA "Programs\Multicap\multicap.exe"
-          if (-not (Test-Path $installed)) { throw "Installed binary not found at $installed" }
+          $searchRoots = @($env:LOCALAPPDATA, $env:ProgramFiles, ${env:ProgramFiles(x86)}) | Where-Object { $_ -and (Test-Path $_) }
+          $installed = $searchRoots | ForEach-Object { Get-ChildItem $_ -Recurse -Filter multicap.exe -ErrorAction SilentlyContinue } | Select-Object -First 1
+          if (-not $installed) { throw "Installed binary not found under expected install roots" }
           Write-Host "Launching installed binary..."
-          & $installed --version
+          & $installed.FullName --version
           if ($LASTEXITCODE -ne 0) { throw "Launch failed with exit code $LASTEXITCODE" }
-          $uninst = Join-Path $env:LOCALAPPDATA "Programs\Multicap\unins000.exe"
-          if (-not (Test-Path $uninst)) { throw "Uninstaller not found at $uninst" }
+          $uninst = $searchRoots | ForEach-Object { Get-ChildItem $_ -Recurse -Filter unins000.exe -ErrorAction SilentlyContinue } | Select-Object -First 1
+          if (-not $uninst) { throw "Uninstaller not found under expected install roots" }
           Write-Host "Uninstalling..."
-          Start-Process -FilePath $uninst -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART" -Wait -NoNewWindow
-          if (Test-Path $installed) { throw "Uninstall left $installed behind" }
+          Start-Process -FilePath $uninst.FullName -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART" -Wait -NoNewWindow
+          if (Test-Path $installed.FullName) { throw "Uninstall left $($installed.FullName) behind" }
       - name: silent-install / launch / uninstall (.msi)
         shell: pwsh
         run: |
