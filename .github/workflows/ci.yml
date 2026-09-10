@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: sync dev deps
-        run: uv sync --extra dev
+        run: uv sync --extra dev --extra ui
       - name: ruff
         run: uv run ruff check .
       - name: ruff format check
@@ -41,9 +41,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: maturin build
-        run: |
-          uv pip install --system maturin
-          maturin build --manifest-path src/multicap/correlator_rs/Cargo.toml --release
+        run: uv tool run maturin build --manifest-path src/multicap/correlator_rs/Cargo.toml --release
 
   pyinstaller-smoke:
     name: PyInstaller one-folder smoke (${{ matrix.os }})
@@ -59,10 +57,8 @@ jobs:
           python-version: "3.12"
       - name: sync deps
         run: uv sync --extra dev --extra ui --extra net
-      - name: install PyInstaller
-        run: uv pip install pyinstaller
       - name: build one-folder bundle
-        run: uv run pyinstaller packaging/pyinstaller/multicap.spec --noconfirm
+        run: uv run --with pyinstaller pyinstaller packaging/pyinstaller/multicap.spec --noconfirm
       - name: smoke — launch bundled binary
         shell: bash
         run: |
@@ -83,10 +79,8 @@ jobs:
           python-version: "3.12"
       - name: sync deps
         run: uv sync --extra dev --extra ui --extra net
-      - name: install PyInstaller
-        run: uv pip install pyinstaller
       - name: build one-folder bundle
-        run: uv run pyinstaller packaging/pyinstaller/multicap.spec --noconfirm
+        run: uv run --with pyinstaller pyinstaller packaging/pyinstaller/multicap.spec --noconfirm
       # v1.6 dual Windows path — §5 Phase 0 smoke requires BOTH artifacts to build.
       - name: install Inno Setup
         run: choco install innosetup --no-progress -y
@@ -154,7 +148,7 @@ jobs:
       - name: install cargo-cyclonedx
         run: cargo install cargo-cyclonedx --locked
       - name: sync deps
-        run: uv sync --extra dev
+        run: uv sync --extra dev --extra ui --extra net
       - name: regenerate SBOM
         run: bash packaging/sbom/generate.sh
       - name: diff against checked-in baseline
