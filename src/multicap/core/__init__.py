@@ -1,3 +1,10 @@
+from multicap.core.cleanup import (
+    CleanupStateManager,
+    ConfigDiffAssertion,
+    DeadManTimer,
+    DeadManTimerInstaller,
+    JobSnapshot,
+)
 from multicap.core.discovery import (
     CapabilityBackedProbe,
     NeighborAdvertisement,
@@ -24,6 +31,15 @@ from multicap.core.planner import (
     PlanImpact,
     WiredPathSolver,
 )
+from multicap.core.safety import (
+    ConsentRecord,
+    DeviceHealth,
+    ExecutionGate,
+    SafetyCheck,
+    SafetyGate,
+    SafetyGateReport,
+    SafetyThresholds,
+)
 from multicap.core.topology import Device, Link, TopologyGraph
 
 __all__ = [
@@ -31,19 +47,31 @@ __all__ = [
     "CapturePlan",
     "CaptureStrategy",
     "CatalystCenterInventorySource",
+    "CleanupStateManager",
+    "ConfigDiffAssertion",
+    "ConsentRecord",
+    "DeadManTimer",
+    "DeadManTimerInstaller",
     "Device",
+    "DeviceHealth",
     "Endpoint",
+    "ExecutionGate",
     "FilterBuilder",
     "FilterSpec",
     "FingerprintRule",
     "IntentCompiler",
     "InventoryIngestService",
     "InventorySnapshot",
+    "JobSnapshot",
     "Link",
     "NeighborAdvertisement",
     "PathIntent",
     "PlanGenerator",
     "PlanImpact",
+    "SafetyCheck",
+    "SafetyGate",
+    "SafetyGateReport",
+    "SafetyThresholds",
     "SnmpFingerprinter",
     "StaticDeviceClassifier",
     "StaticInventorySource",
