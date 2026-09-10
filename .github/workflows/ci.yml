@@ -114,12 +114,12 @@ jobs:
           if (-not $exe) { throw "Inno Setup .exe not found under packaging\windows\Output\" }
           Write-Host "Installing $($exe.FullName) silently..."
           Start-Process -FilePath $exe.FullName -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/LOG=inno-install.log" -Wait -NoNewWindow
-          $installed = "C:\Program Files\multicap\multicap.exe"
+          $installed = Join-Path $env:LOCALAPPDATA "Programs\Multicap\multicap.exe"
           if (-not (Test-Path $installed)) { throw "Installed binary not found at $installed" }
           Write-Host "Launching installed binary..."
           & $installed --version
           if ($LASTEXITCODE -ne 0) { throw "Launch failed with exit code $LASTEXITCODE" }
-          $uninst = "C:\Program Files\multicap\unins000.exe"
+          $uninst = Join-Path $env:LOCALAPPDATA "Programs\Multicap\unins000.exe"
           if (-not (Test-Path $uninst)) { throw "Uninstaller not found at $uninst" }
           Write-Host "Uninstalling..."
           Start-Process -FilePath $uninst -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART" -Wait -NoNewWindow
