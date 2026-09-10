@@ -1,0 +1,11 @@
+{
+  "features": {
+    "epc_physical": true,
+    "epc_subinterface": true,
+    "epc_svi": true,
+    "match_acl": true
+  },
+  "os_family": "ios-xe",
+  "platform": "iosxe-switch",
+  "release_train": "17.12"
+}

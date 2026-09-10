@@ -1,0 +1,9 @@
+{
+  "features": {
+    "ethanalyzer": true,
+    "ethanalyzer_filter_required": true
+  },
+  "os_family": "nx-os",
+  "platform": "nxos",
+  "release_train": "10.2"
+}
