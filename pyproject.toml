@@ -49,6 +49,7 @@ multicap = "multicap.__main__:main"
 golden-capture = "multicap.testkit.golden_capture:main"
 
 [project.entry-points."multicap.drivers"]
+ap = "multicap.drivers.ap:create_driver"
 iosxe-switch = "multicap.drivers.iosxe_switch:create_driver"
 iosxe-wlc = "multicap.drivers.iosxe_wlc:create_driver"
 nxos = "multicap.drivers.nxos:create_driver"
