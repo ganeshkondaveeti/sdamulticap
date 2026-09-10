@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# AppRun launcher — invoked when the AppImage is executed.
+set -euo pipefail
+HERE="$(dirname "$(readlink -f "${0}")")"
+export PATH="${HERE}/usr/bin:${PATH}"
+exec "${HERE}/usr/bin/multicap" "$@"

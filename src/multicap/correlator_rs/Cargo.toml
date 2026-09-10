@@ -1,0 +1,16 @@
+[package]
+name = "correlator_rs"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "correlator_rs"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+pyo3 = { version = "0.22", features = ["extension-module", "abi3-py312"] }
+
+[profile.release]
+lto = true
+codegen-units = 1

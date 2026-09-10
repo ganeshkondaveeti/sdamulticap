@@ -1,0 +1,105 @@
+# PEP 621 metadata for the multicap distribution.
+# See docs/implementation-plan.md §3 for the toolchain rationale.
+
+[project]
+name = "multicap"
+version = "0.0.0"  # Phase 0 scaffold; bumped by release automation from §15.
+description = "Cisco multi-platform synchronized packet-capture orchestrator (Phase 0 scaffold)"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "TBD" }  # ADR pending; MUST be resolved before Phase 10 / SC-10 release.
+authors = [{ name = "Multicap Contributors" }]
+keywords = ["cisco", "packet-capture", "tac", "ios-xe", "nx-os", "ios-xr", "wireless"]
+
+# Runtime deps — pinned in Phase 1+; intentionally empty at Phase 0 scaffold
+# so `uv sync` succeeds against a clean checkout without hitting the network
+# for anything beyond dev-tooling.
+dependencies = []
+
+[project.optional-dependencies]
+# Dev / CI toolchain per §3.
+dev = [
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "pytest>=8.0",
+    "pytest-qt>=4.4",
+    "hypothesis>=6.100",
+    "cyclonedx-bom>=4.4",  # §5 SBOM baseline
+]
+# UI stack — installed on demand so headless CI jobs stay lean.
+ui = [
+    "PySide6>=6.7",
+    "qt-material>=2.14",
+]
+# Network / driver stack — populated in Phase 1 & Phase 2.
+net = [
+    "netmiko>=4.4",
+    "textfsm>=1.1",
+    "ntc-templates>=6.0",
+    "pydantic>=2.8",
+    "keyring>=25.0",
+]
+
+[project.scripts]
+multicap = "multicap.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# ------------------------------------------------------------------
+# Ruff — lint + format (§3)
+# ------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",   # pycodestyle + pyflakes
+    "I",             # isort
+    "B",             # flake8-bugbear
+    "UP",            # pyupgrade
+    "SIM",           # flake8-simplify
+    "RUF",           # ruff-specific
+]
+ignore = ["E501"]    # line-length handled by formatter
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# ------------------------------------------------------------------
+# Mypy — strict on src/multicap/ (§3, CI-gated)
+# ------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+files = ["src/multicap"]
+
+[[tool.mypy.overrides]]
+module = ["netmiko.*", "textfsm.*", "ntc_templates.*", "qt_material.*"]
+ignore_missing_imports = true
+
+# ------------------------------------------------------------------
+# Pytest — unit + property + UI (§17)
+# ------------------------------------------------------------------
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config"
+markers = [
+    "unit: fast in-process unit tests",
+    "contract: CaptureDriver contract tests (Phase 2 gate)",
+    "ui: pytest-qt UI tests",
+    "integration: containerlab/CML lab tests (nightly)",
+    "chaos: chaos harness (Phase 5)",
+    "slow: excluded from PR fast lane",
+]

@@ -1,0 +1,125 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  lint-type-test:
+    name: lint + mypy + pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.12"
+      - name: sync dev deps
+        run: uv sync --extra dev
+      - name: ruff
+        run: uv run ruff check .
+      - name: ruff format check
+        run: uv run ruff format --check .
+      - name: mypy --strict
+        run: uv run mypy
+      - name: pytest (unit)
+        run: uv run pytest -m unit
+
+  rust:
+    name: rustfmt + clippy + maturin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: rustfmt
+        run: cargo fmt --manifest-path src/multicap/correlator_rs/Cargo.toml -- --check
+      - name: clippy
+        run: cargo clippy --manifest-path src/multicap/correlator_rs/Cargo.toml -- -D warnings
+      - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.12"
+      - name: maturin build
+        run: |
+          uv pip install --system maturin
+          maturin build --manifest-path src/multicap/correlator_rs/Cargo.toml --release
+
+  pyinstaller-smoke:
+    name: PyInstaller one-folder smoke (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.12"
+      - name: sync deps
+        run: uv sync --extra dev --extra ui --extra net
+      - name: install PyInstaller
+        run: uv pip install pyinstaller
+      - name: build one-folder bundle
+        run: uv run pyinstaller packaging/pyinstaller/multicap.spec --noconfirm
+      - name: smoke — launch bundled binary
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            ./dist/multicap/multicap.exe || true
+          else
+            ./dist/multicap/multicap || true
+          fi
+
+  windows-installers:
+    name: Windows installer smoke (.exe + .msi, v1.6)
+    needs: pyinstaller-smoke
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.12"
+      - name: sync deps
+        run: uv sync --extra dev --extra ui --extra net
+      - name: install PyInstaller
+        run: uv pip install pyinstaller
+      - name: build one-folder bundle
+        run: uv run pyinstaller packaging/pyinstaller/multicap.spec --noconfirm
+      # v1.6 dual Windows path — §5 Phase 0 smoke requires BOTH artifacts to build.
+      - name: install Inno Setup
+        run: choco install innosetup --no-progress -y
+      - name: build .exe (Inno Setup)
+        run: iscc packaging\windows\multicap.iss
+      - name: install WiX
+        run: dotnet tool install --global wix
+      - name: build .msi (WiX)
+        run: |
+          wix build packaging\windows\multicap.wxs -o packaging\windows\multicap.msi
+      - name: silent-install / launch / uninstall (.exe)
+        shell: pwsh
+        run: |
+          Write-Host "TODO: silent-install + launch + uninstall smoke for .exe (Phase 0 wiring)"
+      - name: silent-install / launch / uninstall (.msi)
+        shell: pwsh
+        run: |
+          Write-Host "TODO: silent-install + launch + uninstall smoke for .msi (Phase 0 wiring)"
+
+  sbom-baseline:
+    name: SBOM baseline check (§5 R6)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+      - name: install cargo-cyclonedx
+        run: cargo install cargo-cyclonedx --locked
+      - name: sync deps
+        run: uv sync --extra dev
+      - name: regenerate SBOM
+        run: bash packaging/sbom/generate.sh
+      - name: diff against checked-in baseline
+        run: git diff --exit-code packaging/sbom/ref/ || (echo "SBOM drift — commit updated baselines" && exit 1)

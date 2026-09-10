@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Multicap
+GenericName=Cisco Packet-Capture Orchestrator
+Comment=Multi-platform synchronized packet-capture
+Exec=multicap
+Icon=multicap
+Terminal=false
+Categories=Network;

@@ -1,0 +1,12 @@
+[project]
+name = "correlator_rs"
+version = "0.0.0"
+requires-python = ">=3.12"
+
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+module-name = "multicap.correlator_rs._native"
+features = ["pyo3/extension-module"]

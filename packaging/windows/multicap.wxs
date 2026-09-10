@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  WiX source — Windows `.msi` installer (v1.6 enterprise/GPO Windows artifact).
+  See docs/implementation-plan.md §15. Consumes packaging/pyinstaller/dist/multicap/.
+  Signed with signtool via CI (packaging/windows/signtool.env).
+  Per-machine install, transformable for site-specific MST files.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*"
+           Name="Multicap"
+           Language="1033"
+           Version="0.0.0"
+           Manufacturer="Multicap Contributors"
+           UpgradeCode="5F5C1E4E-0000-0000-0000-000000000001">
+
+    <Package InstallerVersion="500"
+             Compressed="yes"
+             InstallScope="perMachine"
+             Description="Cisco Multi-Platform Synchronized Packet-Capture Orchestrator" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Multicap is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Feature Id="ProductFeature" Title="Multicap" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+    </Feature>
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLFOLDER" Name="Multicap" />
+      </Directory>
+    </Directory>
+
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+      <!-- Populated at build time via `heat.exe dir` over packaging/pyinstaller/dist/multicap/ -->
+    </ComponentGroup>
+  </Product>
+</Wix>

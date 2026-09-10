@@ -1,0 +1,348 @@
+================================================================================
+PROJECT: MultiCap - Cisco Multi-Platform Synchronized Packet Capture Orchestrator
+DOCUMENT: problemStatement.txt
+VERSION: 2.0 (DRAFT) - adds Catalyst 9800 Wireless LAN Controller scope
+DATE: 2026-09-09
+OWNER: Lakshmi Ganesh Kondaveeti - Technical Consulting Engineering Technical Leader
+SUPERSEDES: v1.0
+================================================================================
+
+1. PROBLEM STATEMENT
+--------------------------------------------------------------------------------
+Network engineers troubleshooting packet loss, latency, misrouting, onboarding
+failures or protocol errors across enterprise and service-provider networks
+built from Cisco IOS-XE Catalyst 9000 switches, Cisco Catalyst 9800 Wireless LAN
+Controllers, classic Cisco IOS devices, Cisco ASR and ISR routers, and Cisco
+Nexus (NX-OS) switches have no unified way to capture traffic at multiple points
+in the network AT THE SAME TIME.
+
+Each Cisco operating system exposes a different, mutually incompatible capture
+mechanism. IOS-XE and IOS-XR provide Embedded Packet Capture (EPC). Many classic
+Catalyst Layer 2 platforms provide no on-box capture at all and require
+SPAN/RSPAN. NX-OS provides no EPC equivalent: ethanalyzer captures only
+CPU-punted control-plane traffic and is a supervisor-CPU risk if used without a
+capture filter, so data-plane visibility on Nexus requires SPAN or ERSPAN.
+
+The introduction of wireless makes the problem qualitatively harder, not merely
+broader. Three distinct capture domains must be reconciled:
+
+  (a) WIRED domain - conventional frames on switch and router interfaces.
+  (b) CAPWAP TUNNEL domain - in central-switching mode, wireless client traffic
+      traverses the wired network encapsulated in CAPWAP (UDP 5246 control,
+      UDP 5247 data). A capture taken anywhere between the access point and the
+      Catalyst 9800 shows only the tunnel, not the client traffic, and is
+      unusable without automated decapsulation and inner-flow correlation.
+  (c) OVER-THE-AIR (802.11) domain - association, authentication, EAP exchange,
+      key negotiation, retries, roaming, RSSI and channel behaviour are
+      invisible to every wired capture. Observing them requires placing an
+      access point into sniffer mode, which removes that access point from
+      service and disconnects its clients, and which streams 802.11 frames to a
+      remote listener using PEEKREMOTE encapsulation rather than writing a file.
+
+Furthermore, wireless deployment models break the assumption that traffic
+follows a single discoverable wired path. Under FlexConnect local switching, or
+under SD-Access fabric-enabled wireless, client data traffic does not traverse
+the Catalyst 9800 at all - it is switched locally at the access point or
+VXLAN-tunneled to the fabric edge. A tool that captures on the controller and
+reports "no traffic observed" in these modes is not merely unhelpful, it is
+actively misleading.
+
+As a result, engineers today must manually determine the switching mode and
+traffic path, log in to each device individually, recall five or more different
+command syntaxes across wired and wireless platforms, start captures
+sequentially - guaranteeing that no two captures cover the same instant of the
+same transient event - manually transfer capture files off each device, manually
+decapsulate CAPWAP, manually correlate an over-the-air capture against a wired
+capture against controller-side client debug output, and manually reconcile
+capture files whose device clocks are not aligned. This is slow, error prone,
+frequently fails on the first attempt because the event does not reoccur, and
+leaves residual capture configuration, ACLs, monitor sessions and out-of-service
+sniffer-mode access points on production infrastructure when sessions are
+interrupted.
+
+No tool exists that (a) discovers the relevant Cisco wired and wireless devices
+and their switching modes, (b) automatically selects the correct capture
+mechanism per platform and per capture domain, (c) arms and triggers all
+captures near-simultaneously, (d) enforces safety guardrails to protect
+production control planes and wireless service availability, (e) guarantees
+removal of all temporary device configuration and restoration of all access
+point operating modes, and (f) returns a single time-aligned, cross-domain
+correlated packet set that localizes the fault to a specific device, interface,
+radio or protocol exchange.
+
+2. IMPACT OF THE PROBLEM
+--------------------------------------------------------------------------------
+- Mean time to resolution for intermittent, path-dependent and client-specific
+  faults is measured in days, because each capture attempt is a fresh manual
+  coordination exercise.
+- Wireless client onboarding failures are especially costly to diagnose because
+  the failure evidence is split across three capture domains that no engineer
+  can currently capture simultaneously.
+- Transient faults are routinely missed entirely due to non-simultaneous capture.
+- Evidence quality is low: unaligned timestamps and undecapsulated CAPWAP make
+  merged captures unusable or actively misleading.
+- Production risk is introduced by unfiltered captures (Nexus supervisor CPU
+  spikes, exhausted control-plane memory, oversubscribed SPAN destinations) and
+  by access points left in sniffer mode after a failed capture attempt.
+- Deep, per-platform expertise across both wired and wireless domains is
+  required, so the work cannot be delegated to first-line operations staff.
+
+3. OBJECTIVE
+--------------------------------------------------------------------------------
+Deliver a cross-platform desktop application - distributed as a signed .exe for
+Microsoft Windows, a signed and notarized .dmg for macOS, and .deb and AppImage
+packages for Ubuntu Linux - that discovers Cisco wired and wireless network
+devices and orchestrates safe, synchronized, multi-device, multi-domain packet
+captures, returning a single correlated, time-aligned capture set with an
+automated fault-localization verdict.
+
+The flagship capability is a single client-centric intent: given one wireless
+client MAC address, the tool simultaneously captures over-the-air 802.11 frames,
+CAPWAP tunnel traffic, controller-side client state, and the wired forwarding
+path, and presents them as one correlated timeline.
+
+4. SCOPE - IN SCOPE
+--------------------------------------------------------------------------------
+4.1 Supported platform families
+    - IOS-XE switching: Catalyst 9200, 9300, 9400, 9500, 9600.
+    - IOS-XE wireless: Catalyst 9800-L, 9800-40, 9800-80, 9800-CL, and Embedded
+      Wireless Controller on Catalyst 9000 switches, including HA SSO pairs.
+    - IOS-XE routing: ASR 1000, ISR 4000, Catalyst 8000, CSR 1000v.
+    - Classic Cisco IOS: ISR G2 and legacy Catalyst platforms.
+    - IOS-XR: ASR 9000.
+    - NX-OS: Nexus 3000, 5000, 7000, 9000.
+    - Cisco access points operating with a Catalyst 9800 controller, including
+      local, FlexConnect, fabric and sniffer modes.
+
+4.2 Device and topology discovery
+    - Seed-based CDP/LLDP topology crawl with hop limit and CIDR allow-list.
+    - SNMP fingerprinting (sysObjectID, ENTITY-MIB, LLDP-MIB).
+    - Inventory ingest from Cisco Catalyst Center / DNA Center, Prime
+      Infrastructure, NSO, Nexus Dashboard and APIC where available.
+    - Subnet sweep with SSH/NETCONF capability probing.
+    - Platform, OS family and software release classification.
+    - Wireless topology discovery: controllers, HA role (active/standby), access
+      point inventory, AP-to-switch attachment point, radio and channel
+      assignment, WLAN and policy profiles, and per-WLAN switching mode
+      (central switching, FlexConnect local switching, fabric-enabled).
+    - Client location resolution: given a client MAC or IP, identify the
+      associated AP, radio, band, controller, WLAN, VLAN and wired uplink.
+    - L2/L3 path computation between a source and destination, extended to
+      include the wireless segment and CAPWAP tunnel endpoints.
+
+4.3 Capture capability abstraction
+    - Per-platform driver plugins with a common contract:
+      probe, arm, start, stop, fetch, cleanup.
+    - Ranked strategy selection per device: native on-box capture, then ERSPAN
+      to a built-in local collector, then local SPAN to a designated capture
+      host, then explicit declaration of a coverage gap.
+    - Catalyst 9800 specific mechanisms: Embedded Packet Capture on wired and
+      wireless interfaces, control-plane capture, CAPWAP inner-filter capture
+      to match encapsulated client traffic directly, access point packet
+      capture profiles, and radioactive tracing for per-client control-plane
+      narrative.
+    - Over-the-air capture: orchestrated conversion of a selected access point
+      to sniffer mode with explicit band, channel and channel-width selection,
+      and a built-in PEEKREMOTE listener to receive and store the 802.11 stream.
+    - Explicit, prominent reporting of reduced coverage wherever a device,
+      domain or switching mode cannot be captured.
+
+4.4 Synchronized capture execution
+    - Parallel pre-arming of all capture points across persistent SSH sessions.
+    - Single-instant trigger with a target arming skew below 500 ms across all
+      wired and wireless capture points, and below 100 ms on a local LAN.
+    - Optional high-precision mode using device-side EEM or scheduled tasks
+      triggered at an absolute NTP-synchronized epoch.
+    - Coordinated start of stream-based captures (PEEKREMOTE, ERSPAN) alongside
+      file-based captures (EPC, ethanalyzer) within the same capture window.
+
+4.5 Safety, guardrails and hygiene
+    - Mandatory capture filters; unfiltered NX-OS ethanalyzer captures refused.
+    - Pre-flight health checks: CPU, memory, flash space, existing SPAN session
+      count, controller redundancy state, and access point client count.
+    - Service-impact gate for over-the-air capture: converting an access point
+      to sniffer mode requires a separate, explicit, logged acknowledgement that
+      the access point will leave service and disconnect its clients; the tool
+      must report the current client count and recommend the least-impactful
+      candidate access point.
+    - Hard caps on duration, buffer size and packet count; headers-only snap
+      length by default.
+    - Device-side dead-man timer to force-stop captures and remove capture state
+      if the controlling session is lost.
+    - Guaranteed access point mode restoration, including recovery on
+      application restart after a crash, with verification that the access point
+      has rejoined the controller and returned to service.
+    - Detection of Catalyst 9800 HA SSO switchover during a capture, treated as
+      a session-invalidating event with clear user notification.
+    - Post-run configuration and state diff to verify zero residual
+      configuration and zero residual sniffer-mode access points.
+    - Change-ticket capture, lawful-capture consent acknowledgement, and an
+      immutable local audit log.
+
+4.6 Collection, correlation and output
+    - Secure retrieval of capture artifacts (SCP pull) with checksum
+      verification and on-device cleanup.
+    - Built-in ERSPAN (GRE 0x88BE) collector, PEEKREMOTE collector, and
+      optional local NIC capture.
+    - Normalization to pcapng with per-interface metadata recording device,
+      interface or radio, capture domain, mechanism, and computed clock offset.
+    - Automatic CAPWAP decapsulation and correlation of inner client flows to
+      their outer tunnel, with both views retained.
+    - Clock alignment using injected beacon frames plus RTT-compensated device
+      clock reads.
+    - Merge, de-duplication and hop-by-hop packet correlation across wired,
+      CAPWAP and over-the-air domains.
+    - Ladder-diagram timeline showing the full client journey, per-hop latency,
+      and drop-point localization, including 802.11 association and
+      authentication exchange state.
+    - Correlation of radioactive trace output against captured packets on a
+      single timeline.
+    - Exportable evidence report and Wireshark-compatible artifacts.
+
+5. SCOPE - OUT OF SCOPE
+--------------------------------------------------------------------------------
+- Continuous or always-on monitoring; this is an on-demand diagnostic tool.
+- Intrusion detection, NDR, wireless intrusion prevention or security analytics.
+- Replacement for a dedicated packet broker or TAP aggregation infrastructure.
+- Spectrum analysis, RF interference classification or radio resource
+  management tuning.
+- Wireless site survey, coverage prediction or capacity planning.
+- Guaranteed line-rate, lossless capture; on-box capture mechanisms are
+  punt-path rate limited by design and this limitation must be surfaced.
+- Legacy AireOS wireless controllers in the initial releases.
+- Non-Cisco network operating systems in the initial releases.
+- Replacement of Wireshark as an analysis front end.
+
+6. TARGET USERS
+--------------------------------------------------------------------------------
+- Network operations and NOC engineers performing live fault isolation.
+- Wireless engineers diagnosing client onboarding, roaming and performance
+  complaints.
+- TAC and Technical Consulting engineers gathering evidence for escalation.
+- Network architects and validation engineers verifying designs and changes.
+- Security and compliance teams performing authorized traffic inspection.
+
+7. SUCCESS CRITERIA
+--------------------------------------------------------------------------------
+SC-1  Discover and correctly classify at least 95 percent of reachable devices
+      across all supported Cisco platform families, including controllers and
+      access points, in a reference topology.
+SC-2  Given a wireless client MAC address, correctly resolve the associated
+      access point, radio, band, controller, WLAN, switching mode, VLAN and
+      wired uplink in at least 95 percent of cases.
+SC-3  Arm and trigger simultaneous captures on at least 20 devices spanning at
+      least two capture domains, with measured arming skew below 500 ms.
+SC-4  Produce a single merged, time-aligned pcapng whose cross-device timestamp
+      alignment error is below 10 ms after beacon-based correction, including
+      alignment between over-the-air and wired captures.
+SC-5  Automatically decapsulate CAPWAP and correctly associate at least 99
+      percent of inner client flows with their outer tunnel.
+SC-6  Zero residual capture configuration on any device, and zero access points
+      remaining in sniffer mode, after normal completion, user abort,
+      application crash, or network disconnection - verified by automated
+      configuration and state diff.
+SC-7  No device control-plane CPU sustained above an operator-defined threshold
+      as a direct result of a tool-initiated capture.
+SC-8  Correctly identify the fault location in at least 90 percent of seeded
+      fault scenarios in the validation lab, including at least ten wireless
+      onboarding and roaming failure scenarios.
+SC-9  Reduce end-to-end time from "problem reported" to "correlated evidence in
+      hand" from hours to under 15 minutes for a 10-device path and under 20
+      minutes for a full three-domain wireless client capture.
+SC-10 Signed and installable artifacts for Windows (.exe), macOS (notarized
+      .dmg) and Ubuntu (.deb and AppImage) produced from a single CI pipeline.
+
+8. KEY CONSTRAINTS AND ASSUMPTIONS
+--------------------------------------------------------------------------------
+C-1  Capture command syntax, buffer limits and feature availability vary by
+     platform AND software release; capability data must be release-aware and
+     regression-tested against captured golden CLI output.
+C-2  NX-OS has no data-plane equivalent of EPC; ERSPAN or SPAN plumbing is
+     mandatory for Nexus data-plane visibility and may be restricted by customer
+     security policy.
+C-3  Several classic Catalyst Layer 2 platforms do not support EPC at all.
+C-4  Over-the-air 802.11 capture is inherently service-affecting: an access
+     point placed in sniffer mode leaves service and disconnects its clients.
+     This is the highest-impact action the tool can take and must be gated,
+     consented, logged and automatically reverted.
+C-5  Over-the-air capture is band, channel and channel-width specific. A sniffer
+     access point observes only the channel it is tuned to, and cannot decrypt
+     protected client data frames without the relevant key material. These
+     limitations must be stated to the user before capture, not after.
+C-6  Under FlexConnect local switching and SD-Access fabric-enabled wireless,
+     client data traffic does not traverse the Catalyst 9800. The tool must
+     detect the switching mode and redirect the capture plan to the correct
+     enforcement point rather than reporting an empty capture.
+C-7  Catalyst 9800 controllers may operate as HA SSO pairs. Captures are valid
+     only on the active chassis, and a switchover mid-capture invalidates the
+     session.
+C-8  Access point capture behaviour depends on the AP model, its join state and
+     the controller release; unsupported combinations must be detected during
+     capability probing rather than failing at capture time.
+C-9  The tool requires authenticated management access with sufficient privilege
+     and must never store credentials in plaintext; OS-native secure storage
+     (Windows DPAPI, macOS Keychain, Linux libsecret) is required.
+C-10 Devices are assumed to be NTP-synchronized; the tool must still function,
+     with degraded and clearly disclosed precision, when they are not.
+C-11 Packet payloads may contain sensitive or personal data. Over-the-air
+     capture additionally collects frames from clients and devices that are not
+     the intended target and that may not belong to the operator. Headers-only
+     capture is the default; full-payload and over-the-air capture must be
+     explicit, logged and authorized actions.
+C-12 Packet capture, and any change to an access point operating mode,
+     constitute configuration changes on production infrastructure and must be
+     treated as such by change management.
+
+9. PRIMARY RISKS
+--------------------------------------------------------------------------------
+R-1  Cisco CLI drift across releases breaking drivers or parsers.
+     Mitigation: version-pinned capability registry plus golden-output
+     regression suite in CI.
+R-2  Punt-path rate limiting causing incomplete captures to be misread as
+     network packet loss.
+     Mitigation: read and prominently display device-side drop and truncation
+     counters alongside every capture.
+R-3  Guardrail failure impacting a production control plane.
+     Mitigation: mandatory filters, pre-flight health gates, hard caps,
+     device-side dead-man timers, and staged lab-then-pilot rollout.
+R-4  Residual configuration left on production devices, or an access point left
+     out of service in sniffer mode - a direct and visible user-facing outage.
+     Mitigation: journaled state machine, device-side auto-cleanup, crash-time
+     recovery of pending mode restorations, and a mandatory post-run
+     configuration and state diff assertion before a job is marked complete.
+R-5  Customer security policy blocking the ERSPAN or PEEKREMOTE stream paths
+     required for Nexus data-plane and over-the-air capture.
+     Mitigation: explicit degraded-coverage mode with clear disclosure of what
+     was not captured and why.
+R-6  Misleading results in FlexConnect or fabric-enabled wireless deployments
+     where the controller is not in the data path.
+     Mitigation: mandatory switching-mode detection before plan generation, and
+     refusal to present an empty controller capture as evidence of packet loss.
+R-7  Over-the-air capture on the wrong channel or during a client roam yielding
+     no useful frames while still having taken an access point out of service.
+     Mitigation: pre-capture channel confirmation from live client state,
+     multi-AP or multi-channel capture option, and a clear pre-flight summary of
+     exactly what will and will not be observable.
+R-8  Legal and privacy exposure from collecting third-party wireless traffic.
+     Mitigation: explicit lawful-capture consent, headers-only default,
+     immutable audit log, and configurable retention limits on stored captures.
+
+10. DEFINITION OF DONE (INITIAL RELEASE)
+--------------------------------------------------------------------------------
+A network engineer can: enter one or more seed devices or a controller and
+credentials; have the wired and wireless topology discovered, including per-WLAN
+switching mode and access point placement; express a capture intent either as a
+path (source, destination, protocol, port, duration) or as a single wireless
+client MAC address; review an automatically generated per-device capture plan
+stating the mechanism chosen for each capture domain, the estimated blast radius,
+the explicit service impact of any over-the-air capture, and any coverage gaps;
+execute a single synchronized capture across all selected devices and domains;
+and receive a merged, time-aligned pcapng with CAPWAP already decapsulated, plus
+a report that states where in the wireless or wired path the traffic was lost,
+delayed, rejected or altered - with a verified guarantee that no configuration
+was left behind on any device and that every access point has returned to
+service.
+
+================================================================================
+END OF DOCUMENT
+================================================================================

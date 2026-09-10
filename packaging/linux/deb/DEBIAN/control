@@ -1,0 +1,9 @@
+Package: multicap
+Version: 0.0.0
+Section: net
+Priority: optional
+Architecture: amd64
+Depends: libc6, libssl3
+Maintainer: Multicap Contributors <maintainers@example.invalid>
+Description: Cisco Multi-Platform Synchronized Packet-Capture Orchestrator
+ Phase 0 scaffold. See docs/implementation-plan.md.
