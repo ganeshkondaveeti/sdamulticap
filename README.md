@@ -1,6 +1,6 @@
 # Cisco Multi-Platform Synchronized Packet-Capture Orchestrator (`multicap`)
 
-Phase 5 substrate. This repository now contains the transport/persistence foundation, first driver contract slice, wired discovery/topology service, path-intent plan generator, and safety/cleanup gate described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §10.
+Phase 6 substrate. This repository now contains the transport/persistence foundation, first driver contract slice, wired discovery/topology service, path-intent plan generator, safety/cleanup gate, and synchronizer/job-runner slice described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §11.
 
 ## Read First
 
@@ -14,9 +14,9 @@ Phase 5 substrate. This repository now contains the transport/persistence founda
 | [`docs/stack-decision.md`](./docs/stack-decision.md) | ADR-001 — PySide6/Python over Electron/TS |
 | [`docs/edge-cases.md`](./docs/edge-cases.md) | Edge cases & failure modes |
 
-## Phase 5 Status
+## Phase 6 Status
 
-This checkout contains Phase 0 delivery machinery, Phase 1 transport/persistence substrate, Phase 2 driver contract/capability registry, Phase 3 discovery/topology, Phase 4 wired intent planning, and Phase 5 safety/cleanup: health gates, consent/change-ticket audit binding, cleanup state machine, dead-man timer command generation, config-diff verification, retention settings, and crash-recovery replay.
+This checkout contains Phase 0 delivery machinery, Phase 1 transport/persistence substrate, Phase 2 driver contract/capability registry, Phase 3 discovery/topology, Phase 4 wired intent planning, Phase 5 safety/cleanup, and Phase 6 synchronized job execution: parallel trigger, arming-skew measurement, lifecycle runner, live status events, HA invalidation abort, cancel compensation, and placeholder correlation/cleanup.
 
 ## Bootstrapping (Phase 0)
 
@@ -67,6 +67,14 @@ uv run python tools/phase5_demo.py
 ```
 
 The demo drives a mock plan through safety evaluation, full-payload consent, change-ticket audit, cleanup transitions, config-diff verification, and final `DONE` state.
+
+## Phase 6 Demo
+
+```bash
+uv run python tools/phase6_demo.py
+```
+
+The demo drives a mock wired job through arm, parallel trigger, stop, collect, placeholder correlate, cleanup, and final `DONE` state.
 
 ## Release Artifacts (per §15, v1.6)
 

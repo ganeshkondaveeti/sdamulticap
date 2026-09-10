@@ -6,7 +6,7 @@ import sys
 
 
 def main() -> int:
-    print("multicap — Phase 5 safety gate and cleanup state machine.")
+    print("multicap — Phase 6 synchronizer and job runner.")
     return 0
 
 

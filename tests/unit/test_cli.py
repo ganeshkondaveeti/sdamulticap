@@ -10,4 +10,4 @@ def test_phase0_cli_smoke(capsys: pytest.CaptureFixture[str]) -> None:
     assert main() == 0
 
     captured = capsys.readouterr()
-    assert "Phase 5 safety gate and cleanup state machine" in captured.out
+    assert "Phase 6 synchronizer and job runner" in captured.out
