@@ -6,7 +6,7 @@ fn version() -> &'static str {
 }
 
 #[pymodule]
-fn correlator_rs(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn _native(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(version, m)?)?;
     Ok(())
 }

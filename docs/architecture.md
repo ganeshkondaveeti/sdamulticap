@@ -275,22 +275,30 @@ from typing import Literal
 from pydantic import BaseModel
 
 Platform = Literal[
-    "IOS-XE-SW", "IOS-XE-RT", "IOS-XE-WLC",
-    "IOS", "IOS-XR", "NX-OS", "AP",
+    "IOS-XE-SW",
+    "IOS-XE-RT",
+    "IOS-XE-WLC",
+    "IOS",
+    "IOS-XR",
+    "NX-OS",
+    "AP",
 ]
+
 
 class CapabilityMatrix(BaseModel):
     # release-pinned feature flags; populated by Capability Registry
     features: dict[str, bool]
     release_train: str
 
+
 class Device(BaseModel):
     id: str
     mgmt_address: str
     platform: Platform
     os_release: str
-    role: Literal["active", "standby"] | None = None   # HA SSO
+    role: Literal["active", "standby"] | None = None  # HA SSO
     capabilities: CapabilityMatrix
+
 
 class AccessPoint(BaseModel):
     id: str
@@ -298,15 +306,18 @@ class AccessPoint(BaseModel):
     mode: Literal["local", "flex", "fabric", "sniffer"]
     controller_id: str
 
+
 class Wlan(BaseModel):
     ssid: str
     profile: str
     switching_mode: Literal["central", "flex-local", "fabric"]
 
+
 class WirelessTopology(BaseModel):
     controllers: list[Device]
     aps: list[AccessPoint]
     wlans: list[Wlan]
+
 
 class ClientLocation(BaseModel):
     client_mac: str
@@ -320,6 +331,7 @@ class ClientLocation(BaseModel):
     vlan: int | None = None
     wired_uplink_port: str | None = None
 
+
 # CaptureIntent — discriminated union via pydantic
 class PathIntent(BaseModel):
     kind: Literal["path"] = "path"
@@ -329,60 +341,86 @@ class PathIntent(BaseModel):
     port: int | None = None
     duration: timedelta
 
+
 class ClientIntent(BaseModel):
     kind: Literal["client"] = "client"
     client_mac: str
     duration: timedelta
 
+
 CaptureIntent = PathIntent | ClientIntent
+
 
 # CaptureStrategy — one dataclass per kind; discriminated on `.kind`
 @dataclass(slots=True, frozen=True)
 class EpcStrategy:
     kind: Literal["epc"] = "epc"
-    filter: "Acl"; iface: str; snap: int; buf_mb: int
+    filter: "Acl"
+    iface: str
+    snap: int
+    buf_mb: int
+
 
 @dataclass(slots=True, frozen=True)
 class EthanalyzerStrategy:
     kind: Literal["ethanalyzer"] = "ethanalyzer"
-    filter: "Filter"; snap: int          # filter MANDATORY
+    filter: "Filter"
+    snap: int  # filter MANDATORY
+
 
 @dataclass(slots=True, frozen=True)
 class SpanStrategy:
     kind: Literal["span"] = "span"
-    source: list["Port"]; dest: "Port"
+    source: list["Port"]
+    dest: "Port"
+
 
 @dataclass(slots=True, frozen=True)
 class ErspanStrategy:
     kind: Literal["erspan"] = "erspan"
-    source: list["Port"]; collector_id: str
+    source: list["Port"]
+    collector_id: str
+
 
 @dataclass(slots=True, frozen=True)
 class CapwapInnerStrategy:
     kind: Literal["capwap-inner"] = "capwap-inner"
     inner_filter: "Acl"
 
+
 @dataclass(slots=True, frozen=True)
 class ApSnifferStrategy:
     kind: Literal["ap-sniffer"] = "ap-sniffer"
-    ap: AccessPoint; band: str; channel: int; width: int
+    ap: AccessPoint
+    band: str
+    channel: int
+    width: int
     consent: "ConsentRecord"
+
 
 @dataclass(slots=True, frozen=True)
 class RadioactiveTraceStrategy:
     kind: Literal["radioactive-trace"] = "radioactive-trace"
     scope: Literal["client", "ap"]
 
+
 @dataclass(slots=True, frozen=True)
 class CoverageGap:
     kind: Literal["coverage-gap"] = "coverage-gap"
     reason: str
 
+
 CaptureStrategy = (
-    EpcStrategy | EthanalyzerStrategy | SpanStrategy | ErspanStrategy
-    | CapwapInnerStrategy | ApSnifferStrategy | RadioactiveTraceStrategy
+    EpcStrategy
+    | EthanalyzerStrategy
+    | SpanStrategy
+    | ErspanStrategy
+    | CapwapInnerStrategy
+    | ApSnifferStrategy
+    | RadioactiveTraceStrategy
     | CoverageGap
 )
+
 
 class CapturePlan(BaseModel):
     job_id: str
@@ -390,6 +428,7 @@ class CapturePlan(BaseModel):
     blast_radius: "BlastRadius"
     service_impact: "ServiceImpact"
     coverage_gaps: list[CoverageGap]
+
 
 class JournalEntry(BaseModel):
     ts: str
@@ -618,16 +657,24 @@ All artifacts produced from a **single CI pipeline** (SC-10). Reproducible build
   ```python
   from typing import Protocol
   from multicap.core.models import (
-      Device, CapabilityMatrix, CaptureIntent, CaptureStrategy,
-      ArmToken, StopResult, Artifact,
+      Device,
+      CapabilityMatrix,
+      CaptureIntent,
+      CaptureStrategy,
+      ArmToken,
+      StopResult,
+      Artifact,
   )
 
+
   class CaptureDriver(Protocol):
-      supported_releases: tuple[str, ...]      # release-train predicates
+      supported_releases: tuple[str, ...]  # release-train predicates
 
       def probe_capabilities(self, device: Device) -> CapabilityMatrix: ...
       def build_strategy(
-          self, intent: CaptureIntent, device: Device,
+          self,
+          intent: CaptureIntent,
+          device: Device,
       ) -> CaptureStrategy: ...
       def arm(self, strategy: CaptureStrategy, session) -> ArmToken: ...
       def trigger(self, token: ArmToken) -> None: ...
