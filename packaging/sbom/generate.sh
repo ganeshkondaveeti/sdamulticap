@@ -1,29 +1,95 @@
 #!/usr/bin/env bash
-# Regenerate SBOM baselines for §5 Phase 0 exit + §15 Phase 10 release attestation.
+# Regenerate deterministic SBOM baselines for §5 Phase 0 exit + §15 release attestation.
 set -euo pipefail
-cd "$(dirname "$0")"
-mkdir -p ref
-
-uv run cyclonedx-py environment ../../.venv/bin/python --output-format JSON --output-file ref/multicap.python.cdx.json
-
-pushd ../../src/multicap/correlator_rs >/dev/null
-cargo cyclonedx --format json --override-filename correlator_rs.rust.cdx
-mv correlator_rs.rust.cdx.json ../../../packaging/sbom/ref/correlator_rs.rust.cdx.json
-popd >/dev/null
+cd "$(dirname "$0")/../.."
+mkdir -p packaging/sbom/ref
 
 uv run python - <<'PY'
 from __future__ import annotations
 
 import json
+import tomllib
 import uuid
 from pathlib import Path
+from typing import Any
 
-for path in sorted(Path("ref").glob("*.cdx.json")):
-    document = json.loads(path.read_text())
-    document["serialNumber"] = f"urn:uuid:{uuid.uuid5(uuid.NAMESPACE_URL, path.name)}"
-    metadata = document.setdefault("metadata", {})
-    metadata["timestamp"] = "1970-01-01T00:00:00+00:00"
+
+def purl(kind: str, name: str, version: str) -> str:
+    return f"pkg:{kind}/{name}@{version}"
+
+
+def write_bom(path: Path, name: str, components: list[dict[str, Any]], dependencies: list[dict[str, Any]]) -> None:
+    document = {
+        "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+        "bomFormat": "CycloneDX",
+        "specVersion": "1.6",
+        "serialNumber": f"urn:uuid:{uuid.uuid5(uuid.NAMESPACE_URL, path.name)}",
+        "version": 1,
+        "metadata": {
+            "timestamp": "1970-01-01T00:00:00+00:00",
+            "component": {
+                "type": "application",
+                "name": name,
+                "version": "0.0.0",
+                "bom-ref": f"{name}==0.0.0",
+            },
+        },
+        "components": sorted(components, key=lambda item: (item["name"].lower(), item["version"])),
+        "dependencies": sorted(dependencies, key=lambda item: item["ref"]),
+    }
     path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n")
+
+
+uv_lock = tomllib.loads(Path("uv.lock").read_text())
+python_components: list[dict[str, Any]] = []
+python_dependencies: list[dict[str, Any]] = []
+for package in uv_lock["package"]:
+    name = package["name"]
+    version = package["version"]
+    ref = f"{name}=={version}"
+    python_components.append(
+        {
+            "type": "application" if name == "multicap" else "library",
+            "name": name,
+            "version": version,
+            "bom-ref": ref,
+            "purl": purl("pypi", name, version),
+        }
+    )
+    depends_on = sorted({dependency["name"] for dependency in package.get("dependencies", [])})
+    python_dependencies.append({"ref": ref, "dependsOn": depends_on})
+
+write_bom(
+    Path("packaging/sbom/ref/multicap.python.cdx.json"),
+    "multicap-python-lock",
+    python_components,
+    python_dependencies,
+)
+
+cargo_lock = tomllib.loads(Path("src/multicap/correlator_rs/Cargo.lock").read_text())
+rust_components: list[dict[str, Any]] = []
+rust_dependencies: list[dict[str, Any]] = []
+for package in cargo_lock["package"]:
+    name = package["name"]
+    version = package["version"]
+    ref = f"{name}@{version}"
+    rust_components.append(
+        {
+            "type": "application" if name == "correlator_rs" else "library",
+            "name": name,
+            "version": version,
+            "bom-ref": ref,
+            "purl": purl("cargo", name, version),
+        }
+    )
+    rust_dependencies.append({"ref": ref, "dependsOn": sorted(package.get("dependencies", []))})
+
+write_bom(
+    Path("packaging/sbom/ref/correlator_rs.rust.cdx.json"),
+    "correlator-rs-cargo-lock",
+    rust_components,
+    rust_dependencies,
+)
 PY
 
 echo "SBOM baselines written to packaging/sbom/ref/"
