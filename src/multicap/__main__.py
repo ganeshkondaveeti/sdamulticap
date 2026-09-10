@@ -6,7 +6,7 @@ import sys
 
 
 def main() -> int:
-    print("multicap — Phase 4 path intent planning and filter builder.")
+    print("multicap — Phase 5 safety gate and cleanup state machine.")
     return 0
 
 
