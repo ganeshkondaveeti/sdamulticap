@@ -143,6 +143,7 @@ class PlanReviewScreen(ScreenBase):
         consent_layout = cast(QVBoxLayout, consent.layout())
         full_payload = QCheckBox("Full-payload capture consent granted", consent)
         full_payload.setObjectName("fullPayloadConsentCheck")
+        full_payload.setAccessibleName("Full-payload consent")
         change_ticket = QLineEdit("CHG-0004421", consent)
         change_ticket.setObjectName("changeTicketField")
         change_ticket.setAccessibleName("Change-ticket ID")
@@ -186,6 +187,7 @@ class LiveRunScreen(ScreenBase):
         status_layout.addWidget(QLabel(ntp_degraded_banner(state.precision), status))
         abort = QPushButton("Abort Job", status)
         abort.setObjectName("abortJobButton")
+        abort.setAccessibleName("Abort Job")
         status_layout.addWidget(abort)
 
 
