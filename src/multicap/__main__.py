@@ -1,4 +1,4 @@
-"""multicap CLI entrypoint. Wired up in Phase 1."""
+"""multicap CLI entrypoint."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import sys
 
 
 def main() -> int:
-    print("multicap — Phase 0 scaffold. See docs/implementation-plan.md.")
+    print("multicap — Phase 1 transport and persistence substrate.")
     return 0
 
 

@@ -119,7 +119,7 @@ jobs:
           if (-not $installed) { throw "Installed binary not found under expected install roots" }
           Write-Host "Launching installed binary..."
           $output = & $installed.FullName --version
-          if ($output -notmatch "Phase 0 scaffold") { throw "Unexpected launch output: $output" }
+          if ($output -notmatch "Phase 1 transport and persistence substrate") { throw "Unexpected launch output: $output" }
           $uninst = $searchRoots | ForEach-Object { Get-ChildItem $_ -Recurse -Filter unins000.exe -ErrorAction SilentlyContinue } | Select-Object -First 1
           if (-not $uninst) { throw "Uninstaller not found under expected install roots" }
           Write-Host "Uninstalling..."
@@ -136,7 +136,7 @@ jobs:
           if (-not (Test-Path $installed)) { throw "Installed binary not found at $installed" }
           Write-Host "Launching installed binary..."
           $output = & $installed --version
-          if ($output -notmatch "Phase 0 scaffold") { throw "Unexpected launch output: $output" }
+          if ($output -notmatch "Phase 1 transport and persistence substrate") { throw "Unexpected launch output: $output" }
           Write-Host "Uninstalling..."
           Start-Process msiexec -ArgumentList "/x","$msi","/qn","/norestart" -Wait -NoNewWindow
           if (Test-Path $installed) { throw "Uninstall left $installed behind" }
