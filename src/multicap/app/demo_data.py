@@ -18,9 +18,7 @@ from multicap.app.viewmodels import (
     timeline_rows,
 )
 from multicap.core.correlator_facade import CorrelationSummary
-from multicap.core.filters import FilterSpec
-from multicap.core.intent import IntentCompiler
-from multicap.core.planner import CapturePlan, PlanGenerator
+from multicap.core.planner import CapturePlan, CaptureStrategy, PlanImpact
 from multicap.core.reporter import (
     EvidenceBundle,
     FaultVerdict,
@@ -32,6 +30,7 @@ from multicap.core.reporter import (
 from multicap.core.safety import DeviceHealth, SafetyGate
 from multicap.core.synchronizer import StatusEvent
 from multicap.core.topology import Device, Link, TopologyGraph
+from multicap.drivers.base import CaptureFilter
 from multicap.persistence.audit import AuditLog, AuditRecord
 from multicap.persistence.settings import RetentionPruner, RetentionSettings
 
@@ -106,11 +105,14 @@ def _demo_plan() -> CapturePlan:
     topology.add_device(Device("cat-2", "cat-2", "iosxe-switch", "ios-xe", "17.9", "192.0.2.3"))
     topology.add_link(Link("cat-1", "Gi1/0/1", "nx-1", "Eth1/1", "cdp"))
     topology.add_link(Link("nx-1", "Eth1/2", "cat-2", "Gi1/0/1", "cdp"))
-    intent = IntentCompiler().compile_path(
+    capture_filter = CaptureFilter("tcp and dst port 443")
+    return CapturePlan(
         job_id="phase-ui-demo",
-        src_device_id="cat-1",
-        dst_device_id="cat-2",
-        duration_seconds=120,
-        filter_spec=FilterSpec(protocol="tcp", dst_port=443),
+        path=("cat-1", "nx-1", "cat-2"),
+        per_device=(
+            CaptureStrategy("epc", topology.devices["cat-1"], "source", capture_filter),
+            CaptureStrategy("ethanalyzer", topology.devices["nx-1"], "midpoint", capture_filter),
+            CaptureStrategy("epc", topology.devices["cat-2"], "destination", capture_filter),
+        ),
+        impact=PlanImpact("low", "Native filtered on-box capture only."),
     )
-    return PlanGenerator().generate(topology, intent)

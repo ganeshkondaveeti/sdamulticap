@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 from pytestqt.qtbot import QtBot
 
 from multicap.app.main_window import SCREEN_SPECS, MainWindow
+from multicap.drivers.capabilities import CapabilityRegistry
 
 WidgetT = TypeVar("WidgetT", bound=QWidget)
 
@@ -52,6 +53,26 @@ def test_app_window_launches_with_sidebar_toolbar_and_expected_screens(qtbot: Qt
     assert current_widget is not None
     assert current_widget.objectName() == "homeScreen"
     assert find_required(window, QPushButton, "newPathIntentButton") is not None
+
+
+@pytest.mark.ui
+def test_app_window_launch_does_not_require_golden_fixture_package(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def fail_fixture_load(cls: type[CapabilityRegistry]) -> CapabilityRegistry:
+        _ = cls
+        raise AssertionError("GUI launch must not load testkit capability fixtures")
+
+    monkeypatch.setattr(
+        CapabilityRegistry,
+        "from_default_fixtures",
+        classmethod(fail_fixture_load),
+    )
+
+    window = MainWindow()
+    qtbot.addWidget(window)
+
+    assert window.pages.currentWidget() is not None
 
 
 @pytest.mark.ui
