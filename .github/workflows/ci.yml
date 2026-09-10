@@ -87,21 +87,21 @@ jobs:
       - name: build .exe (Inno Setup)
         run: iscc packaging\windows\multicap.iss
       - name: install WiX
-        run: dotnet tool install --global wix --version 6.*
+        run: choco install wixtoolset --no-progress -y
       # v1.6 §5 R6 — heat.exe harvest dist\multicap into ComponentGroup MulticapComponents.
       - name: harvest PyInstaller bundle into WiX ComponentGroup
         shell: pwsh
         run: |
-          wix extension add -g WixToolset.Heat.wixext
-          # Fallback: use classic heat via WiX v3 if v4 heat unavailable
           heat dir dist\multicap `
             -cg MulticapComponents `
             -gg -sfrag -srd -sreg -suid `
             -dr INSTALLFOLDER `
             -out packaging\windows\components.wxs
       - name: build .msi (WiX)
+        shell: pwsh
         run: |
-          wix build packaging\windows\multicap.wxs packaging\windows\components.wxs -b dist\multicap -o packaging\windows\multicap.msi
+          candle packaging\windows\multicap.wxs packaging\windows\components.wxs -dSourceDir=dist\multicap -out packaging\windows\
+          light packaging\windows\multicap.wixobj packaging\windows\components.wixobj -out packaging\windows\multicap.msi
       # v1.6 §5 Phase 0 exit — silent-install + launch + uninstall smoke for BOTH artifacts.
       - name: silent-install / launch / uninstall (.exe)
         shell: pwsh

@@ -66,23 +66,39 @@ write_bom(
     python_dependencies,
 )
 
-cargo_lock = tomllib.loads(Path("src/multicap/correlator_rs/Cargo.lock").read_text())
+cargo_manifest = tomllib.loads(Path("src/multicap/correlator_rs/Cargo.toml").read_text())
 rust_components: list[dict[str, Any]] = []
 rust_dependencies: list[dict[str, Any]] = []
-for package in cargo_lock["package"]:
-    name = package["name"]
-    version = package["version"]
+crate_name = cargo_manifest["package"]["name"]
+crate_version = cargo_manifest["package"]["version"]
+crate_ref = f"{crate_name}@{crate_version}"
+rust_components.append(
+    {
+        "type": "application",
+        "name": crate_name,
+        "version": crate_version,
+        "bom-ref": crate_ref,
+        "purl": purl("cargo", crate_name, crate_version),
+    }
+)
+
+for name, spec in sorted(cargo_manifest.get("dependencies", {}).items()):
+    version = spec["version"] if isinstance(spec, dict) else str(spec)
     ref = f"{name}@{version}"
     rust_components.append(
         {
-            "type": "application" if name == "correlator_rs" else "library",
+            "type": "library",
             "name": name,
             "version": version,
             "bom-ref": ref,
             "purl": purl("cargo", name, version),
         }
     )
-    rust_dependencies.append({"ref": ref, "dependsOn": sorted(package.get("dependencies", []))})
+    rust_dependencies.append({"ref": ref, "dependsOn": []})
+
+rust_dependencies.append(
+    {"ref": crate_ref, "dependsOn": sorted(item["bom-ref"] for item in rust_components if item["type"] == "library")}
+)
 
 write_bom(
     Path("packaging/sbom/ref/correlator_rs.rust.cdx.json"),
