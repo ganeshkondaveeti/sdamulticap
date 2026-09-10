@@ -118,8 +118,8 @@ jobs:
           $installed = $searchRoots | ForEach-Object { Get-ChildItem $_ -Recurse -Filter multicap.exe -ErrorAction SilentlyContinue } | Select-Object -First 1
           if (-not $installed) { throw "Installed binary not found under expected install roots" }
           Write-Host "Launching installed binary..."
-          & $installed.FullName --version
-          if ($LASTEXITCODE -ne 0) { throw "Launch failed with exit code $LASTEXITCODE" }
+          $output = & $installed.FullName --version
+          if ($output -notmatch "Phase 0 scaffold") { throw "Unexpected launch output: $output" }
           $uninst = $searchRoots | ForEach-Object { Get-ChildItem $_ -Recurse -Filter unins000.exe -ErrorAction SilentlyContinue } | Select-Object -First 1
           if (-not $uninst) { throw "Uninstaller not found under expected install roots" }
           Write-Host "Uninstalling..."
@@ -135,8 +135,8 @@ jobs:
           $installed = "C:\Program Files\multicap\multicap.exe"
           if (-not (Test-Path $installed)) { throw "Installed binary not found at $installed" }
           Write-Host "Launching installed binary..."
-          & $installed --version
-          if ($LASTEXITCODE -ne 0) { throw "Launch failed with exit code $LASTEXITCODE" }
+          $output = & $installed --version
+          if ($output -notmatch "Phase 0 scaffold") { throw "Unexpected launch output: $output" }
           Write-Host "Uninstalling..."
           Start-Process msiexec -ArgumentList "/x","$msi","/qn","/norestart" -Wait -NoNewWindow
           if (Test-Path $installed) { throw "Uninstall left $installed behind" }
