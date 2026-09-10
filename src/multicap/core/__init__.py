@@ -57,8 +57,21 @@ from multicap.core.synchronizer import (
     TriggerResult,
 )
 from multicap.core.topology import Device, Link, TopologyGraph
+from multicap.core.wireless import (
+    AccessPoint,
+    ClientLocation,
+    ClientLocationResolver,
+    WirelessCaptureAction,
+    WirelessCapturePlan,
+    WirelessController,
+    WirelessInventory,
+    WirelessPathSolver,
+    WlanProfile,
+    wireless_filter_expression,
+)
 
 __all__ = [
+    "AccessPoint",
     "ArmedCapture",
     "CapabilityBackedProbe",
     "CapturePlan",
@@ -66,6 +79,8 @@ __all__ = [
     "CapwapOuterHeader",
     "CatalystCenterInventorySource",
     "CleanupStateManager",
+    "ClientLocation",
+    "ClientLocationResolver",
     "ClockAligner",
     "ClockOffset",
     "ClockSample",
@@ -109,10 +124,17 @@ __all__ = [
     "TriggerReport",
     "TriggerResult",
     "WiredPathSolver",
+    "WirelessCaptureAction",
+    "WirelessCapturePlan",
+    "WirelessController",
+    "WirelessInventory",
+    "WirelessPathSolver",
+    "WlanProfile",
     "assert_skew_within",
     "parse_capwap_outer_header",
     "parse_cdp_neighbors_detail",
     "parse_lldp_neighbors_detail",
     "request_for_strategy",
     "thin_inventory_sources",
+    "wireless_filter_expression",
 ]
