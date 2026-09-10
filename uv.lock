@@ -1005,6 +1005,10 @@ wheels = [
 name = "multicap"
 version = "0.0.0"
 source = { editable = "." }
+dependencies = [
+    { name = "pyside6" },
+    { name = "qt-material" },
+]
 
 [package.optional-dependencies]
 dev = [
@@ -1026,9 +1030,7 @@ net = [
     { name = "textfsm" },
 ]
 ui = [
-    { name = "pyside6" },
     { name = "pytest-qt" },
-    { name = "qt-material" },
 ]
 
 [package.metadata]
@@ -1042,11 +1044,11 @@ requires-dist = [
     { name = "netmiko", marker = "extra == 'net'", specifier = ">=4.4" },
     { name = "ntc-templates", marker = "extra == 'net'", specifier = ">=6.0" },
     { name = "pydantic", marker = "extra == 'net'", specifier = ">=2.8" },
-    { name = "pyside6", marker = "extra == 'ui'", specifier = ">=6.7" },
+    { name = "pyside6", specifier = ">=6.7" },
     { name = "pysnmp", marker = "extra == 'net'", specifier = ">=7.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-qt", marker = "extra == 'ui'", specifier = ">=4.4" },
-    { name = "qt-material", marker = "extra == 'ui'", specifier = ">=2.14" },
+    { name = "qt-material", specifier = ">=2.14" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
     { name = "scp", marker = "extra == 'net'", specifier = ">=0.15" },
     { name = "textfsm", marker = "extra == 'net'", specifier = ">=1.1" },

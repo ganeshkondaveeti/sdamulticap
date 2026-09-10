@@ -11,10 +11,11 @@ license = { text = "TBD" }  # ADR pending; MUST be resolved before Phase 10 / SC
 authors = [{ name = "Multicap Contributors" }]
 keywords = ["cisco", "packet-capture", "tac", "ios-xe", "nx-os", "ios-xr", "wireless"]
 
-# Runtime deps — pinned in Phase 1+; intentionally empty at Phase 0 scaffold
-# so `uv sync` succeeds against a clean checkout without hitting the network
-# for anything beyond dev-tooling.
-dependencies = []
+# Runtime deps — the default `multicap` entrypoint launches the PySide6 desktop shell.
+dependencies = [
+    "PySide6>=6.7",
+    "qt-material>=2.14",
+]
 
 [project.optional-dependencies]
 # Dev / CI toolchain per §3.
@@ -25,11 +26,9 @@ dev = [
     "hypothesis>=6.100",
     "cyclonedx-bom>=4.4",  # §5 SBOM baseline
 ]
-# UI stack — installed on demand so headless CI jobs stay lean.
+# UI test stack — installed on demand so non-UI test jobs stay lean.
 ui = [
-    "PySide6>=6.7",
     "pytest-qt>=4.4",
-    "qt-material>=2.14",
 ]
 # Network / driver stack — populated in Phase 1 & Phase 2.
 net = [
