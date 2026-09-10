@@ -1,6 +1,6 @@
 # Cisco Multi-Platform Synchronized Packet-Capture Orchestrator (`multicap`)
 
-Phase 2 substrate. This repository now contains the transport/persistence foundation plus the first driver contract and capability-registry slice described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §7.
+Phase 3 substrate. This repository now contains the transport/persistence foundation, first driver contract slice, and wired discovery/topology service described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §8.
 
 ## Read First
 
@@ -14,9 +14,9 @@ Phase 2 substrate. This repository now contains the transport/persistence founda
 | [`docs/stack-decision.md`](./docs/stack-decision.md) | ADR-001 — PySide6/Python over Electron/TS |
 | [`docs/edge-cases.md`](./docs/edge-cases.md) | Edge cases & failure modes |
 
-## Phase 2 Status
+## Phase 3 Status
 
-This checkout contains the Phase 0 delivery machinery, Phase 1 transport/persistence substrate, and Phase 2 device abstraction slice: `CaptureDriver` protocol, entry-point discovery, release-aware golden capability registry, IOS-XE Catalyst 9000 switch driver, NX-OS driver, and mock-backed contract tests.
+This checkout contains Phase 0 delivery machinery, Phase 1 transport/persistence substrate, Phase 2 driver contract/capability registry, and Phase 3 discovery/topology: CDP/LLDP crawl with hop/CIDR limits, subnet-sweep probing, SNMP fingerprinting, Catalyst Center inventory ingest, and feature-flagged thin inventory adapters.
 
 ## Bootstrapping (Phase 0)
 
@@ -43,6 +43,14 @@ uv run pytest -m contract
 ```
 
 The contract tests drive IOS-XE and NX-OS drivers end-to-end against mock transport and prove NX-OS refuses unfiltered `ethanalyzer` before issuing any command.
+
+## Phase 3 Demo
+
+```bash
+uv run python tools/phase3_demo.py
+```
+
+The demo drives a mock CDP/LLDP crawl into a typed topology graph.
 
 ## Release Artifacts (per §15, v1.6)
 

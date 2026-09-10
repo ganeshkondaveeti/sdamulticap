@@ -6,7 +6,7 @@ import sys
 
 
 def main() -> int:
-    print("multicap — Phase 2 driver contract and capability registry.")
+    print("multicap — Phase 3 discovery and topology graph.")
     return 0
 
 
