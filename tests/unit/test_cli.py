@@ -10,4 +10,4 @@ def test_phase0_cli_smoke(capsys: pytest.CaptureFixture[str]) -> None:
     assert main() == 0
 
     captured = capsys.readouterr()
-    assert "Phase 1 transport and persistence substrate" in captured.out
+    assert "Phase 2 driver contract and capability registry" in captured.out
