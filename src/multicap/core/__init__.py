@@ -5,6 +5,14 @@ from multicap.core.cleanup import (
     DeadManTimerInstaller,
     JobSnapshot,
 )
+from multicap.core.clock import ClockAligner, ClockOffset, ClockSample
+from multicap.core.correlator_facade import (
+    CapwapOuterHeader,
+    CorrelatedPacket,
+    CorrelationSummary,
+    CorrelatorFacade,
+    parse_capwap_outer_header,
+)
 from multicap.core.discovery import (
     CapabilityBackedProbe,
     NeighborAdvertisement,
@@ -55,10 +63,17 @@ __all__ = [
     "CapabilityBackedProbe",
     "CapturePlan",
     "CaptureStrategy",
+    "CapwapOuterHeader",
     "CatalystCenterInventorySource",
     "CleanupStateManager",
+    "ClockAligner",
+    "ClockOffset",
+    "ClockSample",
     "ConfigDiffAssertion",
     "ConsentRecord",
+    "CorrelatedPacket",
+    "CorrelationSummary",
+    "CorrelatorFacade",
     "DeadManTimer",
     "DeadManTimerInstaller",
     "Device",
@@ -95,6 +110,7 @@ __all__ = [
     "TriggerResult",
     "WiredPathSolver",
     "assert_skew_within",
+    "parse_capwap_outer_header",
     "parse_cdp_neighbors_detail",
     "parse_lldp_neighbors_detail",
     "request_for_strategy",
