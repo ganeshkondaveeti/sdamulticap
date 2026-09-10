@@ -1,6 +1,6 @@
 # Cisco Multi-Platform Synchronized Packet-Capture Orchestrator (`multicap`)
 
-Phase 8b substrate. This repository now contains the transport/persistence foundation, wired discovery/planning/execution/correlation foundation, controller-side wireless foundations, and AP sniffer/wireless-correlation slice described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §13b.
+Phase 9 substrate. This repository now contains the transport/persistence foundation, wired discovery/planning/execution/correlation foundation, controller-side wireless foundations, AP sniffer/wireless-correlation slice, and evidence reporter/UI-polish surfaces described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §14.
 
 ## Read First
 
@@ -14,9 +14,9 @@ Phase 8b substrate. This repository now contains the transport/persistence found
 | [`docs/stack-decision.md`](./docs/stack-decision.md) | ADR-001 — PySide6/Python over Electron/TS |
 | [`docs/edge-cases.md`](./docs/edge-cases.md) | Edge cases & failure modes |
 
-## Phase 8b Status
+## Phase 9 Status
 
-This checkout contains Phase 0 delivery machinery through Phase 8a plus Phase 8b AP sniffer and wireless correlation: AP capability probing, sniffer AP recommendation, sniffer consent/key-material disclosure, live-channel confirmation, AP mode transition driver, PEEKREMOTE normalization, CAPWAP inner/outer pairing, radioactive-trace fusion, and AP restoration assertion.
+This checkout contains Phase 0 delivery machinery through Phase 8b plus Phase 9 reporting and polish: ladder diagram rows, HTML/PDF evidence bundle, Wireshark-compatible pcapng handoff, audit export, heuristic fault verdicts, NTP-degraded UX banners, retention usage rows, and the SC-9 wall-clock harness.
 
 ## Bootstrapping (Phase 0)
 
@@ -99,6 +99,14 @@ uv run python tools/phase8b_demo.py
 ```
 
 The demo drives the mock three-domain wireless slice: AP sniffer action, wireless safety consent, PEEKREMOTE normalization, radioactive-trace fusion, and AP restoration verification.
+
+## Phase 9 Demo
+
+```bash
+uv run python tools/phase9_demo.py
+```
+
+The demo renders a mock evidence bundle with a ladder verdict, HTML/PDF artifacts, audit export, pcapng handoff, NTP-degraded banner, and SC-9 timing assertions.
 
 ## Release Artifacts (per §15, v1.6)
 

@@ -40,6 +40,15 @@ from multicap.core.planner import (
     PlanImpact,
     WiredPathSolver,
 )
+from multicap.core.reporter import (
+    EvidenceBundle,
+    EvidenceReporter,
+    FaultVerdict,
+    FaultVerdictEngine,
+    LadderDiagramBuilder,
+    LadderHop,
+    PrecisionStatus,
+)
 from multicap.core.safety import (
     ConsentRecord,
     DeviceHealth,
@@ -56,6 +65,7 @@ from multicap.core.synchronizer import (
     TriggerReport,
     TriggerResult,
 )
+from multicap.core.timing import TimingResult, TimingScenario, WallClockHarness, sc9_scenarios
 from multicap.core.topology import Device, Link, TopologyGraph
 from multicap.core.wireless import (
     AccessPoint,
@@ -110,6 +120,10 @@ __all__ = [
     "Device",
     "DeviceHealth",
     "Endpoint",
+    "EvidenceBundle",
+    "EvidenceReporter",
+    "FaultVerdict",
+    "FaultVerdictEngine",
     "ExecutionGate",
     "FilterBuilder",
     "FilterSpec",
@@ -120,11 +134,14 @@ __all__ = [
     "JobResult",
     "JobRunner",
     "JobSnapshot",
+    "LadderDiagramBuilder",
+    "LadderHop",
     "Link",
     "NeighborAdvertisement",
     "PathIntent",
     "PlanGenerator",
     "PlanImpact",
+    "PrecisionStatus",
     "RadioactiveTraceEvent",
     "SafetyCheck",
     "SafetyGate",
@@ -143,6 +160,9 @@ __all__ = [
     "TopologyGraph",
     "TriggerReport",
     "TriggerResult",
+    "TimingResult",
+    "TimingScenario",
+    "WallClockHarness",
     "WiredPathSolver",
     "WirelessCaptureAction",
     "WirelessCapturePlan",
@@ -158,6 +178,7 @@ __all__ = [
     "parse_cdp_neighbors_detail",
     "parse_lldp_neighbors_detail",
     "request_for_strategy",
+    "sc9_scenarios",
     "thin_inventory_sources",
     "wireless_filter_expression",
 ]

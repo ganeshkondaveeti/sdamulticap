@@ -6,7 +6,7 @@ import sys
 
 
 def main() -> int:
-    print("multicap — Phase 8b AP sniffer and wireless correlation.")
+    print("multicap — Phase 9 evidence reporting and UI polish.")
     return 0
 
 
