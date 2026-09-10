@@ -8,7 +8,14 @@ from multicap.core.topology import Device, TopologyGraph
 
 SwitchingMode = Literal["central", "flex-local", "fabric"]
 HaRole = Literal["active", "standby"]
-WirelessActionKind = Literal["wlc-epc", "capwap-inner", "radioactive-trace", "wired-redirect"]
+WirelessActionKind = Literal[
+    "wlc-epc",
+    "capwap-inner",
+    "radioactive-trace",
+    "wired-redirect",
+    "ap-sniffer",
+]
+ApMode = Literal["local", "flex", "fabric", "sniffer"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +49,8 @@ class AccessPoint:
     band: str
     channel: int
     channel_width_mhz: int
+    client_count: int = 0
+    model: str = "C9130AXI"
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,6 +83,81 @@ class WirelessInventory:
     aps: dict[str, AccessPoint]
     wlans: dict[str, WlanProfile]
     client_bindings: dict[str, tuple[str, str]]
+
+
+@dataclass(frozen=True, slots=True)
+class ApStateSnapshot:
+    ap_name: str
+    mode: ApMode
+    band: str
+    channel: int
+    channel_width_mhz: int
+
+
+@dataclass(frozen=True, slots=True)
+class ApCapability:
+    model: str
+    joined: bool
+    controller_release: str
+    sniffer_supported: bool
+    reason: str = ""
+
+
+class ApCapabilityRegistry:
+    def __init__(self, capabilities: dict[tuple[str, bool, str], ApCapability]) -> None:
+        self._capabilities = capabilities
+
+    @classmethod
+    def defaults(cls) -> ApCapabilityRegistry:
+        return cls(
+            {
+                ("C9130AXI", True, "17.9"): ApCapability("C9130AXI", True, "17.9", True),
+                ("C9130AXI", True, "17.12"): ApCapability("C9130AXI", True, "17.12", True),
+            }
+        )
+
+    def probe(self, ap: AccessPoint, controller: WirelessController) -> ApCapability:
+        return self._capabilities.get(
+            (ap.model, ap.joined, controller.release_train),
+            ApCapability(
+                ap.model, ap.joined, controller.release_train, False, "unsupported-ap-release"
+            ),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class SnifferCandidate:
+    ap: AccessPoint
+    capability: ApCapability
+    recommended: bool
+    reason: str
+
+
+class SnifferApSelector:
+    def __init__(self, capabilities: ApCapabilityRegistry | None = None) -> None:
+        self._capabilities = capabilities or ApCapabilityRegistry.defaults()
+
+    def candidates(
+        self, inventory: WirelessInventory, controller_id: str
+    ) -> list[SnifferCandidate]:
+        controller = inventory.controllers[controller_id]
+        aps = [ap for ap in inventory.aps.values() if ap.controller_id == controller_id]
+        capable = [(ap, self._capabilities.probe(ap, controller)) for ap in aps]
+        supported = [item for item in capable if item[1].sniffer_supported]
+        recommended_name = (
+            min((ap for ap, _capability in supported), key=lambda ap: ap.client_count).name
+            if supported
+            else ""
+        )
+        return [
+            SnifferCandidate(
+                ap,
+                capability,
+                ap.name == recommended_name,
+                "least-impact" if ap.name == recommended_name else capability.reason,
+            )
+            for ap, capability in capable
+        ]
 
 
 class ClientLocationResolver:
@@ -152,6 +236,7 @@ class WirelessPathSolver:
             raise ValueError(f"controller {controller.id} is not HA active")
         expression = wireless_filter_expression(client, filter_spec)
         actions = [
+            WirelessCaptureAction("ap-sniffer", client.ap_name, expression),
             WirelessCaptureAction("wlc-epc", controller.id, expression),
             WirelessCaptureAction("capwap-inner", controller.id, expression),
             WirelessCaptureAction("radioactive-trace", controller.id, client.client_mac),
@@ -186,3 +271,81 @@ def wireless_filter_expression(client: ClientLocation, spec: FilterSpec) -> str:
     if spec.dst_port is not None:
         parts.append(f"dst port {spec.dst_port}")
     return " ".join(parts)
+
+
+@dataclass(frozen=True, slots=True)
+class WirelessSafetyReport:
+    allowed: bool
+    selected_ap: str
+    disclosure: str
+    failures: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class SnifferConsentRecord:
+    job_id: str
+    ap_name: str
+    acknowledged_by: str
+    granted: bool
+
+
+class WirelessSafetyGate:
+    def __init__(self, max_clients_without_override: int = 10) -> None:
+        self._max_clients_without_override = max_clients_without_override
+
+    def evaluate(
+        self,
+        client: ClientLocation,
+        candidates: list[SnifferCandidate],
+        consent: SnifferConsentRecord | None,
+        live_channel: int,
+        override_client_count: bool = False,
+    ) -> WirelessSafetyReport:
+        failures: list[str] = []
+        selected = next(
+            (candidate for candidate in candidates if candidate.ap.name == client.ap_name), None
+        )
+        if selected is None:
+            failures.append("associated AP is absent from sniffer candidates")
+        elif not selected.capability.sniffer_supported:
+            failures.append(selected.capability.reason or "sniffer unsupported")
+        elif (
+            selected.ap.client_count > self._max_clients_without_override
+            and not override_client_count
+        ):
+            failures.append("AP client-count exceeds sniffer threshold")
+        if consent is None or not consent.granted:
+            failures.append("sniffer consent is required")
+        if live_channel != client.channel:
+            failures.append("live client channel changed before capture")
+        return WirelessSafetyReport(
+            allowed=not failures,
+            selected_ap=client.ap_name,
+            disclosure="Protected 802.11 data frames remain opaque without key material; management and EAPOL frames remain analyzable.",
+            failures=tuple(failures),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class ApStateDiff:
+    ap_name: str
+    restored: bool
+    differences: tuple[str, ...]
+
+
+class ApRestorationAssertion:
+    def compare(self, before: ApStateSnapshot, after: ApStateSnapshot) -> ApStateDiff:
+        differences: list[str] = []
+        for field in ["mode", "band", "channel", "channel_width_mhz"]:
+            if getattr(before, field) != getattr(after, field):
+                differences.append(field)
+        return ApStateDiff(
+            before.ap_name, not differences and after.mode != "sniffer", tuple(differences)
+        )
+
+    def assert_restored(self, before: ApStateSnapshot, after: ApStateSnapshot) -> None:
+        diff = self.compare(before, after)
+        if not diff.restored:
+            raise ValueError(
+                f"AP {before.ap_name} restoration failed: {', '.join(diff.differences)}"
+            )
