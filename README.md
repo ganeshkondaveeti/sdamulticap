@@ -1,6 +1,6 @@
 # Cisco Multi-Platform Synchronized Packet-Capture Orchestrator (`multicap`)
 
-Phase 3 substrate. This repository now contains the transport/persistence foundation, first driver contract slice, and wired discovery/topology service described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §8.
+Phase 4 substrate. This repository now contains the transport/persistence foundation, first driver contract slice, wired discovery/topology service, and path-intent plan generator described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §9.
 
 ## Read First
 
@@ -14,9 +14,9 @@ Phase 3 substrate. This repository now contains the transport/persistence founda
 | [`docs/stack-decision.md`](./docs/stack-decision.md) | ADR-001 — PySide6/Python over Electron/TS |
 | [`docs/edge-cases.md`](./docs/edge-cases.md) | Edge cases & failure modes |
 
-## Phase 3 Status
+## Phase 4 Status
 
-This checkout contains Phase 0 delivery machinery, Phase 1 transport/persistence substrate, Phase 2 driver contract/capability registry, and Phase 3 discovery/topology: CDP/LLDP crawl with hop/CIDR limits, subnet-sweep probing, SNMP fingerprinting, Catalyst Center inventory ingest, and feature-flagged thin inventory adapters.
+This checkout contains Phase 0 delivery machinery, Phase 1 transport/persistence substrate, Phase 2 driver contract/capability registry, Phase 3 discovery/topology, and Phase 4 wired intent planning: path-intent compiler, BFS path solver, ranked strategy selection, explicit coverage gaps, blast-radius/service-impact estimates, filter builder, and plan-review view-model rows.
 
 ## Bootstrapping (Phase 0)
 
@@ -51,6 +51,14 @@ uv run python tools/phase3_demo.py
 ```
 
 The demo drives a mock CDP/LLDP crawl into a typed topology graph.
+
+## Phase 4 Demo
+
+```bash
+uv run python tools/phase4_demo.py
+```
+
+The demo compiles a wired path intent into a per-device capture plan with EPC and `ethanalyzer` strategies plus platform-native filter expressions.
 
 ## Release Artifacts (per §15, v1.6)
 

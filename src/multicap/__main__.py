@@ -6,7 +6,7 @@ import sys
 
 
 def main() -> int:
-    print("multicap — Phase 3 discovery and topology graph.")
+    print("multicap — Phase 4 path intent planning and filter builder.")
     return 0
 
 

@@ -10,4 +10,4 @@ def test_phase0_cli_smoke(capsys: pytest.CaptureFixture[str]) -> None:
     assert main() == 0
 
     captured = capsys.readouterr()
-    assert "Phase 3 discovery and topology graph" in captured.out
+    assert "Phase 4 path intent planning and filter builder" in captured.out
