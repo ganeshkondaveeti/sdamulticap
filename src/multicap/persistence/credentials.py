@@ -26,7 +26,7 @@ class CredentialStore:
         password = keyring.get_password(ref.service, ref.username)
         if password is None:
             raise KeyError(f"credential not found: {ref.service}/{ref.username}")
-        return password
+        return str(password)
 
     def delete(self, ref: CredentialRef) -> None:
         import keyring
