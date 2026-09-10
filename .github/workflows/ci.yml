@@ -92,7 +92,8 @@ jobs:
       - name: harvest PyInstaller bundle into WiX ComponentGroup
         shell: pwsh
         run: |
-          heat dir dist\multicap `
+          $bundle = (Resolve-Path dist\multicap).Path
+          heat dir $bundle `
             -cg MulticapComponents `
             -gg -sfrag -srd -sreg -suid `
             -dr INSTALLFOLDER `
@@ -100,7 +101,7 @@ jobs:
       - name: build .msi (WiX)
         shell: pwsh
         run: |
-          candle packaging\windows\multicap.wxs packaging\windows\components.wxs -dSourceDir=dist\multicap -out packaging\windows\
+          candle packaging\windows\multicap.wxs packaging\windows\components.wxs -out packaging\windows\
           light packaging\windows\multicap.wixobj packaging\windows\components.wixobj -out packaging\windows\multicap.msi
       # v1.6 §5 Phase 0 exit — silent-install + launch + uninstall smoke for BOTH artifacts.
       - name: silent-install / launch / uninstall (.exe)
