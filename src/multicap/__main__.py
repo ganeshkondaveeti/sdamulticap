@@ -6,7 +6,7 @@ import sys
 
 
 def main() -> int:
-    print("multicap — Phase 7 collectors, clock alignment, and correlator facade.")
+    print("multicap — Phase 8a wireless discovery and 9800 controller capture.")
     return 0
 
 

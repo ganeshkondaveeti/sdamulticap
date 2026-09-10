@@ -1,6 +1,6 @@
 # Cisco Multi-Platform Synchronized Packet-Capture Orchestrator (`multicap`)
 
-Phase 7 substrate. This repository now contains the transport/persistence foundation, first driver contract slice, wired discovery/topology service, path-intent plan generator, safety/cleanup gate, synchronizer/job-runner slice, and collector/correlation foundation described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §12.
+Phase 8a substrate. This repository now contains the transport/persistence foundation, wired discovery/planning/execution/correlation foundation, and the controller-side wireless foundations described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §13.
 
 ## Read First
 
@@ -14,9 +14,9 @@ Phase 7 substrate. This repository now contains the transport/persistence founda
 | [`docs/stack-decision.md`](./docs/stack-decision.md) | ADR-001 — PySide6/Python over Electron/TS |
 | [`docs/edge-cases.md`](./docs/edge-cases.md) | Edge cases & failure modes |
 
-## Phase 7 Status
+## Phase 8a Status
 
-This checkout contains Phase 0 delivery machinery, Phase 1 transport/persistence substrate, Phase 2 driver contract/capability registry, Phase 3 discovery/topology, Phase 4 wired intent planning, Phase 5 safety/cleanup, Phase 6 synchronized job execution, and Phase 7 collector/correlation: ERSPAN, PEEKREMOTE stub, local capture records, RTT-compensated clock offsets, CAPWAP outer-port parsing, merge/dedup, and drop/truncation counter surfacing.
+This checkout contains Phase 0 delivery machinery through Phase 7 wired execution/correlation plus Phase 8a wireless foundations: controller/AP/WLAN/client-location models, switching-mode-aware wireless path solver, FlexConnect/fabric wired-uplink redirects, IOS-XE 9800 controller driver stubs for wireless EPC, control-plane/CAPWAP-inner capture, AP capture profile definition, and radioactive tracing control.
 
 ## Bootstrapping (Phase 0)
 
@@ -83,6 +83,14 @@ uv run python tools/phase7_demo.py
 ```
 
 The demo collects mock ERSPAN/local packets, estimates device clock offset, and writes a merged pcapng-style JSONL artifact with correlation metadata.
+
+## Phase 8a Demo
+
+```bash
+uv run python tools/phase8a_demo.py
+```
+
+The demo resolves a wireless client location and produces a controller-side wireless plan with a FlexConnect wired-uplink redirect.
 
 ## Release Artifacts (per §15, v1.6)
 
