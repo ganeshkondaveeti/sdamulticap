@@ -47,8 +47,12 @@ class DemoUiState:
         }
         self.status_events: tuple[StatusEvent, ...] = (
             StatusEvent(self.plan.job_id, "cat-1", "ARMED", 0.4, self.health["cat-1"], "EPC armed"),
-            StatusEvent(self.plan.job_id, "nx-1", "ACTIVE", 1.1, self.health["nx-1"], "ethanalyzer active"),
-            StatusEvent(self.plan.job_id, "cat-2", "COLLECTED", 5.6, self.health["cat-2"], "pcap pulled"),
+            StatusEvent(
+                self.plan.job_id, "nx-1", "ACTIVE", 1.1, self.health["nx-1"], "ethanalyzer active"
+            ),
+            StatusEvent(
+                self.plan.job_id, "cat-2", "COLLECTED", 5.6, self.health["cat-2"], "pcap pulled"
+            ),
         )
         self.audit: AuditLog = AuditLog(self.root / "audit.sqlite3")
         _ = self.audit.append(
@@ -91,7 +95,9 @@ class DemoUiState:
 
     def retention_row(self) -> RetentionSettingsRow:
         return retention_settings_row(
-            RetentionPruner(self.root / "pcaps", RetentionSettings(days=30, max_bytes=50 * 1024**3)).usage()
+            RetentionPruner(
+                self.root / "pcaps", RetentionSettings(days=30, max_bytes=50 * 1024**3)
+            ).usage()
         )
 
     def audit_records(self) -> list[AuditRecord]:

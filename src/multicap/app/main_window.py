@@ -27,15 +27,37 @@ from multicap.app.widgets.screens import (
 )
 
 SCREEN_SPECS: tuple[ScreenSpec, ...] = (
-    ScreenSpec("home", "Home / Dashboard", "Recent jobs, active jobs, and quick-start capture actions."),
-    ScreenSpec("discovery", "Discovery", "Seed devices, credentials, crawl progress, and topology preview."),
-    ScreenSpec("intents", "Intents", "Path and client-MAC capture intents compile into reviewable plans."),
-    ScreenSpec("planReview", "Plan Review", "Safety, consent, strategy, NTP, and coverage checks before execution."),
-    ScreenSpec("jobs", "Jobs", "Active and historical capture jobs with phase, duration, and verdict."),
-    ScreenSpec("liveRun", "Live Run", "Per-device state, phase timeline, counters, and recovery actions."),
-    ScreenSpec("reports", "Reports", "Evidence bundles, ladder diagrams, pcapng handoff, and exports."),
-    ScreenSpec("audit", "Audit", "Hash-chained audit records, consent history, and chain verification."),
-    ScreenSpec("settings", "Settings", "Retention, credentials, inventory adapters, enforcement, NTP, and telemetry."),
+    ScreenSpec(
+        "home", "Home / Dashboard", "Recent jobs, active jobs, and quick-start capture actions."
+    ),
+    ScreenSpec(
+        "discovery", "Discovery", "Seed devices, credentials, crawl progress, and topology preview."
+    ),
+    ScreenSpec(
+        "intents", "Intents", "Path and client-MAC capture intents compile into reviewable plans."
+    ),
+    ScreenSpec(
+        "planReview",
+        "Plan Review",
+        "Safety, consent, strategy, NTP, and coverage checks before execution.",
+    ),
+    ScreenSpec(
+        "jobs", "Jobs", "Active and historical capture jobs with phase, duration, and verdict."
+    ),
+    ScreenSpec(
+        "liveRun", "Live Run", "Per-device state, phase timeline, counters, and recovery actions."
+    ),
+    ScreenSpec(
+        "reports", "Reports", "Evidence bundles, ladder diagrams, pcapng handoff, and exports."
+    ),
+    ScreenSpec(
+        "audit", "Audit", "Hash-chained audit records, consent history, and chain verification."
+    ),
+    ScreenSpec(
+        "settings",
+        "Settings",
+        "Retention, credentials, inventory adapters, enforcement, NTP, and telemetry.",
+    ),
 )
 
 

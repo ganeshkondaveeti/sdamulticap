@@ -87,7 +87,13 @@ class HomeScreen(ScreenBase):
             _table(
                 ["Job", "Intent", "Status", "Duration", "Verdict"],
                 [
-                    [state.plan.job_id, "Path cat-1 → cat-2", "DONE", "2m14s", state.verdict.severity],
+                    [
+                        state.plan.job_id,
+                        "Path cat-1 → cat-2",
+                        "DONE",
+                        "2m14s",
+                        state.verdict.severity,
+                    ],
                     ["wireless-demo", "Client aa:bb:cc", "ACTIVE", "6m10s", "collecting"],
                 ],
                 "recentJobsTable",
@@ -106,8 +112,12 @@ class PlanReviewScreen(ScreenBase):
         )
         summary = self.add_section("Summary")
         summary_layout = cast(QVBoxLayout, summary.layout())
-        summary_layout.addWidget(QLabel(f"Intent: Path cat-1 → cat-2, {len(state.plan.path)} devices", summary))
-        summary_layout.addWidget(QLabel(f"Service impact: {state.plan.impact.service_impact}", summary))
+        summary_layout.addWidget(
+            QLabel(f"Intent: Path cat-1 → cat-2, {len(state.plan.path)} devices", summary)
+        )
+        summary_layout.addWidget(
+            QLabel(f"Service impact: {state.plan.impact.service_impact}", summary)
+        )
 
         precision = QLabel(ntp_degraded_banner(state.precision), self)
         precision.setObjectName("ntpDegradedBanner")
@@ -178,7 +188,12 @@ class LiveRunScreen(ScreenBase):
         )
         timeline = self.add_section("Phase Timeline")
         timeline_layout = cast(QVBoxLayout, timeline.layout())
-        timeline_layout.addWidget(QLabel("IDLE → ARMED → ACTIVE → STOPPED → COLLECTED → CORRELATED → VERIFIED → DONE", timeline))
+        timeline_layout.addWidget(
+            QLabel(
+                "IDLE → ARMED → ACTIVE → STOPPED → COLLECTED → CORRELATED → VERIFIED → DONE",
+                timeline,
+            )
+        )
         timeline_layout.addWidget(QLabel("Arming skew ruler: 84.0 ms ✓", timeline))
         status = self.add_section("Status & Actions")
         status_layout = cast(QVBoxLayout, status.layout())
@@ -228,7 +243,9 @@ class ReportsScreen(ScreenBase):
             ),
             "Timeline",
         )
-        _ = tabs.addTab(_label_panel("Drops: 2\nTruncated: 1\nCoverage gaps: none"), "Coverage & Drops")
+        _ = tabs.addTab(
+            _label_panel("Drops: 2\nTruncated: 1\nCoverage gaps: none"), "Coverage & Drops"
+        )
         _ = tabs.addTab(_label_panel(state.precision.banner), "Metadata")
         evidence = state.evidence_row()
         _ = tabs.addTab(
@@ -277,8 +294,14 @@ class SettingsScreen(ScreenBase):
         )
         for title, text in [
             ("Credentials", "Credential profiles render secrets as •••••••• with rotate actions."),
-            ("Inventory Adapters", "Catalyst Center first-class; Prime, NSO, Nexus Dashboard, APIC feature-flagged."),
-            ("Enforcement Mode", "ENFORCED: change-ticket and consent gates block execution until satisfied."),
+            (
+                "Inventory Adapters",
+                "Catalyst Center first-class; Prime, NSO, Nexus Dashboard, APIC feature-flagged.",
+            ),
+            (
+                "Enforcement Mode",
+                "ENFORCED: change-ticket and consent gates block execution until satisfied.",
+            ),
             ("NTP Status", "Recently discovered devices feed Plan Review degraded banners."),
             ("Telemetry", "Crash reports only, opt-in, off by default."),
         ]:
@@ -299,10 +322,19 @@ class AuditScreen(ScreenBase):
         status.setAccessibleName("Audit chain status")
         self.root.addWidget(status)
         rows = [
-            [str(record.id), record.ts, record.job_id, record.event, str(record.payload), record.entry_hash[:12]]
+            [
+                str(record.id),
+                record.ts,
+                record.job_id,
+                record.event,
+                str(record.payload),
+                record.entry_hash[:12],
+            ]
             for record in state.audit_records()
         ]
-        self.root.addWidget(_table(["ID", "Timestamp", "Job", "Event", "Payload", "Hash"], rows, "auditTable"))
+        self.root.addWidget(
+            _table(["ID", "Timestamp", "Job", "Event", "Payload", "Hash"], rows, "auditTable")
+        )
 
 
 def _label_panel(text: str) -> QWidget:

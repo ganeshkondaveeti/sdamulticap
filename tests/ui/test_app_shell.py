@@ -23,7 +23,9 @@ from multicap.drivers.capabilities import CapabilityRegistry
 WidgetT = TypeVar("WidgetT", bound=QWidget)
 
 
-def find_required[WidgetT: QWidget](window: MainWindow, widget_type: type[WidgetT], name: str) -> WidgetT:
+def find_required[WidgetT: QWidget](
+    window: MainWindow, widget_type: type[WidgetT], name: str
+) -> WidgetT:
     widget = window.findChild(widget_type, name)
     assert widget is not None, name
     return widget
