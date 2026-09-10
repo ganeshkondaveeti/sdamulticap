@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   WiX source — Windows `.msi` installer (v1.6 enterprise/GPO Windows artifact).
-  See docs/implementation-plan.md §15. Consumes packaging/pyinstaller/dist/multicap/.
+  See docs/implementation-plan.md §15. Consumes dist/multicap/.
   Signed with signtool via CI (packaging/windows/signtool.env).
   Per-machine install, transformable for site-specific MST files.
 -->
@@ -22,7 +22,7 @@
     <MediaTemplate EmbedCab="yes" />
 
     <Feature Id="ProductFeature" Title="Multicap" Level="1">
-      <ComponentGroupRef Id="ProductComponents" />
+      <ComponentGroupRef Id="MulticapComponents" />
     </Feature>
 
     <Directory Id="TARGETDIR" Name="SourceDir">
@@ -31,8 +31,5 @@
       </Directory>
     </Directory>
 
-    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
-      <!-- Populated at build time via `heat.exe dir` over packaging/pyinstaller/dist/multicap/ -->
-    </ComponentGroup>
   </Product>
 </Wix>

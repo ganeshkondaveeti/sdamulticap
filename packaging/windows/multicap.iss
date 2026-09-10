@@ -1,5 +1,5 @@
 ; Inno Setup script — Windows `.exe` installer (v1.6 primary Windows artifact).
-; See docs/implementation-plan.md §15. Consumes packaging/pyinstaller/dist/multicap/.
+; See docs/implementation-plan.md §15. Consumes dist/multicap/.
 ; Signed with signtool via CI (packaging/windows/signtool.env).
 
 #define AppName "Multicap"
@@ -22,7 +22,7 @@ PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline dialog
 
 [Files]
-Source: "..\pyinstaller\dist\multicap\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "..\..\dist\multicap\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
