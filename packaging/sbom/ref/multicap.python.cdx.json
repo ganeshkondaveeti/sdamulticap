@@ -10,6 +10,13 @@
       "version": "0.8.0"
     },
     {
+      "bom-ref": "anyio==4.15.1",
+      "name": "anyio",
+      "purl": "pkg:pypi/anyio@4.15.1",
+      "type": "library",
+      "version": "4.15.1"
+    },
+    {
       "bom-ref": "arrow==1.4.0",
       "name": "arrow",
       "purl": "pkg:pypi/arrow@1.4.0",
@@ -43,6 +50,13 @@
       "purl": "pkg:pypi/boolean-py@5.0",
       "type": "library",
       "version": "5.0"
+    },
+    {
+      "bom-ref": "certifi==2026.7.22",
+      "name": "certifi",
+      "purl": "pkg:pypi/certifi@2026.7.22",
+      "type": "library",
+      "version": "2026.7.22"
     },
     {
       "bom-ref": "cffi==2.1.1",
@@ -99,6 +113,27 @@
       "purl": "pkg:pypi/fqdn@1.5.1",
       "type": "library",
       "version": "1.5.1"
+    },
+    {
+      "bom-ref": "h11==0.16.0",
+      "name": "h11",
+      "purl": "pkg:pypi/h11@0.16.0",
+      "type": "library",
+      "version": "0.16.0"
+    },
+    {
+      "bom-ref": "httpcore==1.0.9",
+      "name": "httpcore",
+      "purl": "pkg:pypi/httpcore@1.0.9",
+      "type": "library",
+      "version": "1.0.9"
+    },
+    {
+      "bom-ref": "httpx==0.28.1",
+      "name": "httpx",
+      "purl": "pkg:pypi/httpx@0.28.1",
+      "type": "library",
+      "version": "0.28.1"
     },
     {
       "bom-ref": "hypothesis==6.168.0",
@@ -276,6 +311,13 @@
       "version": "1.1.0"
     },
     {
+      "bom-ref": "ncclient==0.7.1",
+      "name": "ncclient",
+      "purl": "pkg:pypi/ncclient@0.7.1",
+      "type": "library",
+      "version": "0.7.1"
+    },
+    {
       "bom-ref": "netmiko==4.7.0",
       "name": "netmiko",
       "purl": "pkg:pypi/netmiko@4.7.0",
@@ -337,6 +379,13 @@
       "purl": "pkg:pypi/py-serializable@2.1.0",
       "type": "library",
       "version": "2.1.0"
+    },
+    {
+      "bom-ref": "pyasn1==0.6.4",
+      "name": "pyasn1",
+      "purl": "pkg:pypi/pyasn1@0.6.4",
+      "type": "library",
+      "version": "0.6.4"
     },
     {
       "bom-ref": "pycparser==3.0",
@@ -407,6 +456,13 @@
       "purl": "pkg:pypi/pyside6-essentials@6.11.2",
       "type": "library",
       "version": "6.11.2"
+    },
+    {
+      "bom-ref": "pysnmp==7.1.29",
+      "name": "pysnmp",
+      "purl": "pkg:pypi/pysnmp@7.1.29",
+      "type": "library",
+      "version": "7.1.29"
     },
     {
       "bom-ref": "pytest==9.1.1",
@@ -591,6 +647,13 @@
     },
     {
       "dependsOn": [
+        "idna",
+        "typing-extensions"
+      ],
+      "ref": "anyio==4.15.1"
+    },
+    {
+      "dependsOn": [
         "python-dateutil",
         "tzdata"
       ],
@@ -611,6 +674,10 @@
     {
       "dependsOn": [],
       "ref": "boolean-py==5.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "certifi==2026.7.22"
     },
     {
       "dependsOn": [
@@ -659,6 +726,26 @@
     {
       "dependsOn": [],
       "ref": "fqdn==1.5.1"
+    },
+    {
+      "dependsOn": [],
+      "ref": "h11==0.16.0"
+    },
+    {
+      "dependsOn": [
+        "certifi",
+        "h11"
+      ],
+      "ref": "httpcore==1.0.9"
+    },
+    {
+      "dependsOn": [
+        "anyio",
+        "certifi",
+        "httpcore",
+        "idna"
+      ],
+      "ref": "httpx==0.28.1"
     },
     {
       "dependsOn": [
@@ -796,6 +883,13 @@
     },
     {
       "dependsOn": [
+        "lxml",
+        "paramiko"
+      ],
+      "ref": "ncclient==0.7.1"
+    },
+    {
+      "dependsOn": [
         "ntc-templates",
         "paramiko",
         "pyserial",
@@ -850,6 +944,10 @@
         "defusedxml"
       ],
       "ref": "py-serializable==2.1.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pyasn1==0.6.4"
     },
     {
       "dependsOn": [],
@@ -908,6 +1006,12 @@
         "shiboken6"
       ],
       "ref": "pyside6==6.11.2"
+    },
+    {
+      "dependsOn": [
+        "pyasn1"
+      ],
+      "ref": "pysnmp==7.1.29"
     },
     {
       "dependsOn": [

@@ -33,7 +33,11 @@ ui = [
 ]
 # Network / driver stack — populated in Phase 1 & Phase 2.
 net = [
+    "httpx>=0.27",
+    "ncclient>=0.6.15",
     "netmiko>=4.4",
+    "pysnmp>=7.1",
+    "scp>=0.15",
     "textfsm>=1.1",
     "ntc-templates>=6.0",
     "pydantic>=2.8",
@@ -85,7 +89,16 @@ warn_unused_ignores = true
 files = ["src/multicap"]
 
 [[tool.mypy.overrides]]
-module = ["netmiko.*", "textfsm.*", "ntc_templates.*", "qt_material.*"]
+module = [
+    "httpx.*",
+    "ncclient.*",
+    "netmiko.*",
+    "pysnmp.*",
+    "scp.*",
+    "textfsm.*",
+    "ntc_templates.*",
+    "qt_material.*",
+]
 ignore_missing_imports = true
 
 # ------------------------------------------------------------------
