@@ -122,7 +122,7 @@ class LadderDiagramBuilder:
 
 class EvidenceReporter:
     def __init__(self, verdict_engine: FaultVerdictEngine | None = None) -> None:
-        self._verdict_engine = verdict_engine or FaultVerdictEngine()
+        self._verdict_engine: FaultVerdictEngine = verdict_engine or FaultVerdictEngine()
 
     def build_bundle(
         self,
@@ -141,10 +141,10 @@ class EvidenceReporter:
         pdf_path = output_dir / f"{job_id}-evidence.pdf"
         verdict = self._verdict_engine.evaluate(hops, plan)
 
-        audit_path.write_text(self._audit_json(audit.records()), encoding="utf-8")
+        _ = audit_path.write_text(self._audit_json(audit.records()), encoding="utf-8")
         html_doc = self._html(job_id, hops, verdict, correlation, precision, audit_path)
-        html_path.write_text(html_doc, encoding="utf-8")
-        pdf_path.write_bytes(self._pdf_placeholder(job_id, verdict, precision))
+        _ = html_path.write_text(html_doc, encoding="utf-8")
+        _ = pdf_path.write_bytes(self._pdf_placeholder(job_id, verdict, precision))
         return EvidenceBundle(
             job_id=job_id,
             html_path=html_path,
@@ -169,14 +169,18 @@ class EvidenceReporter:
         audit_path: Path,
     ) -> str:
         hop_rows = "\n".join(
-            "<tr>"
-            f"<td>{html.escape(hop.device_id)}</td>"
-            f"<td>{html.escape(hop.mechanism)}</td>"
-            f"<td>{hop.latency_ms:.1f} ms</td>"
-            f"<td>{hop.dropped}</td>"
-            f"<td>{hop.truncated}</td>"
-            f"<td>{html.escape(hop.wifi_state)}</td>"
-            "</tr>"
+            "".join(
+                [
+                    "<tr>",
+                    f"<td>{html.escape(hop.device_id)}</td>",
+                    f"<td>{html.escape(hop.mechanism)}</td>",
+                    f"<td>{hop.latency_ms:.1f} ms</td>",
+                    f"<td>{hop.dropped}</td>",
+                    f"<td>{hop.truncated}</td>",
+                    f"<td>{html.escape(hop.wifi_state)}</td>",
+                    "</tr>",
+                ]
+            )
             for hop in hops
         )
         return f"""<!doctype html>
@@ -193,9 +197,12 @@ class EvidenceReporter:
     def _pdf_placeholder(
         self, job_id: str, verdict: FaultVerdict, precision: PrecisionStatus
     ) -> bytes:
-        body = (
-            f"MultiCap Evidence Bundle {job_id}\n"
-            f"Verdict: {verdict.severity} at {verdict.location}\n"
-            f"{precision.banner}\n"
+        body = "\n".join(
+            [
+                f"MultiCap Evidence Bundle {job_id}",
+                f"Verdict: {verdict.severity} at {verdict.location}",
+                precision.banner,
+                "",
+            ]
         )
         return b"%PDF-1.4\n% MultiCap text evidence placeholder\n" + body.encode("utf-8")

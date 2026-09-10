@@ -17,12 +17,18 @@ from multicap.core.correlator_facade import CorrelationSummary
 from multicap.core.filters import FilterSpec
 from multicap.core.intent import IntentCompiler
 from multicap.core.planner import PlanGenerator
-from multicap.core.reporter import EvidenceReporter, FaultVerdictEngine, LadderDiagramBuilder, PrecisionStatus
+from multicap.core.reporter import (
+    EvidenceReporter,
+    FaultVerdictEngine,
+    LadderDiagramBuilder,
+    PrecisionStatus,
+)
 from multicap.core.timing import WallClockHarness, sc9_scenarios
 from multicap.core.topology import Device, Link, TopologyGraph
 from multicap.persistence.audit import AuditLog
 from multicap.persistence.settings import RetentionPruner, RetentionSettings
-from tests.unit.test_synchronizer_job_runner import healthy, plan as planned_path
+from tests.unit.test_synchronizer_job_runner import healthy
+from tests.unit.test_synchronizer_job_runner import plan as planned_path
 
 
 def phase9_plan() -> object:

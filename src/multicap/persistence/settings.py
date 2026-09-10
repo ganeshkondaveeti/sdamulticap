@@ -26,9 +26,9 @@ class RetentionUsage:
 
 class RetentionPruner:
     def __init__(self, root: Path, settings: RetentionSettings) -> None:
-        self._root = root
-        self._settings = settings
-        self._store = PcapStore(root, settings.policy())
+        self._root: Path = root
+        self._settings: RetentionSettings = settings
+        self._store: PcapStore = PcapStore(root, settings.policy())
 
     def prune(self) -> list[Path]:
         return self._store.prune()
