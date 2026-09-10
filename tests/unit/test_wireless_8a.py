@@ -78,11 +78,12 @@ def test_wireless_path_solver_keeps_central_capture_on_controller() -> None:
 
     assert not plan.redirected
     assert [action.kind for action in plan.actions] == [
+        "ap-sniffer",
         "wlc-epc",
         "capwap-inner",
         "radioactive-trace",
     ]
-    assert "client-mac aa:bb:cc:dd:ee:ff" in plan.actions[0].filter_expression
+    assert "client-mac aa:bb:cc:dd:ee:ff" in plan.actions[1].filter_expression
 
 
 @pytest.mark.unit

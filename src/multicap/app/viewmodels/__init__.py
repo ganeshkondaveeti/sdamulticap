@@ -17,8 +17,16 @@ from multicap.app.viewmodels.phase8a import (
     client_location_row,
     wireless_plan_rows,
 )
+from multicap.app.viewmodels.phase8b import (
+    ApStateDiffRow,
+    SnifferConsentRow,
+    ap_state_diff_row,
+    sniffer_consent_rows,
+    wireless_safety_summary,
+)
 
 __all__ = [
+    "ApStateDiffRow",
     "ClientLocationRow",
     "ConsentGateViewModel",
     "FilterBuilderViewModel",
@@ -26,12 +34,16 @@ __all__ = [
     "PathIntentViewModel",
     "PlanReviewRow",
     "SafetyGateRow",
+    "SnifferConsentRow",
     "WirelessPlanRow",
+    "ap_state_diff_row",
     "client_location_row",
     "gate_from_viewmodel",
     "live_rows",
     "rows_for_plan",
     "safety_rows",
     "skew_label",
+    "sniffer_consent_rows",
     "wireless_plan_rows",
+    "wireless_safety_summary",
 ]
