@@ -33,8 +33,7 @@ class WallClockHarness:
         failures = [result for result in results if not result.passed]
         if failures:
             detail = "; ".join(
-                f"{result.scenario.name}={result.elapsed_seconds:.1f}s"
-                for result in failures
+                f"{result.scenario.name}={result.elapsed_seconds:.1f}s" for result in failures
             )
             raise ValueError(f"SC-9 wall-clock threshold exceeded: {detail}")
 

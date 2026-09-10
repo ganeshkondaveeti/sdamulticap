@@ -106,7 +106,9 @@ def test_phase9_viewmodels_render_counters_gaps_ntp_and_retention(tmp_path: Path
 @pytest.mark.unit
 def test_fault_verdict_engine_prefers_coverage_gap() -> None:
     plan_obj = coverage_gap_plan()
-    hops = LadderDiagramBuilder().build(plan_obj, tuple(), CorrelationSummary(Path("out.pcapng"), 0, 0, 0))
+    hops = LadderDiagramBuilder().build(
+        plan_obj, tuple(), CorrelationSummary(Path("out.pcapng"), 0, 0, 0)
+    )
 
     assert FaultVerdictEngine().evaluate(hops, plan_obj).severity == "coverage-gap"
 
