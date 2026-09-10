@@ -15,7 +15,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from multicap.app.demo_data import DemoUiState
 from multicap.app.widgets.placeholder import PlaceholderScreen, ScreenSpec
+from multicap.app.widgets.screens import (
+    AuditScreen,
+    HomeScreen,
+    LiveRunScreen,
+    PlanReviewScreen,
+    ReportsScreen,
+    SettingsScreen,
+)
 
 SCREEN_SPECS: tuple[ScreenSpec, ...] = (
     ScreenSpec("home", "Home / Dashboard", "Recent jobs, active jobs, and quick-start capture actions."),
@@ -36,6 +45,7 @@ class MainWindow(QMainWindow):
         self._settings: QSettings = QSettings()
         self._navigation: QListWidget = QListWidget(self)
         self._pages: QStackedWidget = QStackedWidget(self)
+        self._state: DemoUiState = DemoUiState()
 
         self.setWindowTitle("MultiCap")
         self.setObjectName("mainWindow")
@@ -113,8 +123,27 @@ class MainWindow(QMainWindow):
         self._pages.setObjectName("contentStack")
         self._pages.setAccessibleName("Main content")
         for spec in SCREEN_SPECS:
-            _ = self._pages.addWidget(PlaceholderScreen(spec, self._pages))
+            _ = self._pages.addWidget(self._page_for(spec))
         self.setCentralWidget(self._pages)
+
+        home = cast(HomeScreen, self._pages.widget(0))
+        _ = home.new_path_button.clicked.connect(lambda: self._navigation.setCurrentRow(2))
+        _ = home.new_client_button.clicked.connect(lambda: self._navigation.setCurrentRow(2))
+
+    def _page_for(self, spec: ScreenSpec) -> QWidget:
+        if spec.key == "home":
+            return HomeScreen(self._state, self._pages)
+        if spec.key == "planReview":
+            return PlanReviewScreen(self._state, self._pages)
+        if spec.key == "liveRun":
+            return LiveRunScreen(self._state, self._pages)
+        if spec.key == "reports":
+            return ReportsScreen(self._state, self._pages)
+        if spec.key == "audit":
+            return AuditScreen(self._state, self._pages)
+        if spec.key == "settings":
+            return SettingsScreen(self._state, self._pages)
+        return PlaceholderScreen(spec, self._pages)
 
     def _restore_geometry(self) -> None:
         geometry = cast(object, self._settings.value("mainWindow/geometry"))
