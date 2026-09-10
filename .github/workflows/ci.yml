@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: sync dev deps
-        run: uv sync --extra dev --extra ui
+        run: uv sync --extra dev
       - name: ruff
         run: uv run ruff check .
       - name: ruff format check
@@ -87,7 +87,7 @@ jobs:
       - name: build .exe (Inno Setup)
         run: iscc packaging\windows\multicap.iss
       - name: install WiX
-        run: dotnet tool install --global wix
+        run: dotnet tool install --global wix --version 6.*
       # v1.6 §5 R6 — heat.exe harvest dist\multicap into ComponentGroup MulticapComponents.
       - name: harvest PyInstaller bundle into WiX ComponentGroup
         shell: pwsh
@@ -145,8 +145,6 @@ jobs:
         with:
           python-version: "3.12"
       - uses: dtolnay/rust-toolchain@stable
-      - name: install cargo-cyclonedx
-        run: cargo install cargo-cyclonedx --locked
       - name: sync deps
         run: uv sync --extra dev --extra ui --extra net
       - name: regenerate SBOM
