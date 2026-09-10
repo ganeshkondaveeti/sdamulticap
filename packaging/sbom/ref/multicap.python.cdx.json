@@ -864,7 +864,10 @@
       "ref": "more-itertools==11.1.0"
     },
     {
-      "dependsOn": [],
+      "dependsOn": [
+        "pyside6",
+        "qt-material"
+      ],
       "ref": "multicap==0.0.0"
     },
     {
