@@ -1,6 +1,6 @@
 # Cisco Multi-Platform Synchronized Packet-Capture Orchestrator (`multicap`)
 
-Phase 6 substrate. This repository now contains the transport/persistence foundation, first driver contract slice, wired discovery/topology service, path-intent plan generator, safety/cleanup gate, and synchronizer/job-runner slice described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §11.
+Phase 7 substrate. This repository now contains the transport/persistence foundation, first driver contract slice, wired discovery/topology service, path-intent plan generator, safety/cleanup gate, synchronizer/job-runner slice, and collector/correlation foundation described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §12.
 
 ## Read First
 
@@ -14,9 +14,9 @@ Phase 6 substrate. This repository now contains the transport/persistence founda
 | [`docs/stack-decision.md`](./docs/stack-decision.md) | ADR-001 — PySide6/Python over Electron/TS |
 | [`docs/edge-cases.md`](./docs/edge-cases.md) | Edge cases & failure modes |
 
-## Phase 6 Status
+## Phase 7 Status
 
-This checkout contains Phase 0 delivery machinery, Phase 1 transport/persistence substrate, Phase 2 driver contract/capability registry, Phase 3 discovery/topology, Phase 4 wired intent planning, Phase 5 safety/cleanup, and Phase 6 synchronized job execution: parallel trigger, arming-skew measurement, lifecycle runner, live status events, HA invalidation abort, cancel compensation, and placeholder correlation/cleanup.
+This checkout contains Phase 0 delivery machinery, Phase 1 transport/persistence substrate, Phase 2 driver contract/capability registry, Phase 3 discovery/topology, Phase 4 wired intent planning, Phase 5 safety/cleanup, Phase 6 synchronized job execution, and Phase 7 collector/correlation: ERSPAN, PEEKREMOTE stub, local capture records, RTT-compensated clock offsets, CAPWAP outer-port parsing, merge/dedup, and drop/truncation counter surfacing.
 
 ## Bootstrapping (Phase 0)
 
@@ -75,6 +75,14 @@ uv run python tools/phase6_demo.py
 ```
 
 The demo drives a mock wired job through arm, parallel trigger, stop, collect, placeholder correlate, cleanup, and final `DONE` state.
+
+## Phase 7 Demo
+
+```bash
+uv run python tools/phase7_demo.py
+```
+
+The demo collects mock ERSPAN/local packets, estimates device clock offset, and writes a merged pcapng-style JSONL artifact with correlation metadata.
 
 ## Release Artifacts (per §15, v1.6)
 

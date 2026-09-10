@@ -6,7 +6,7 @@ import sys
 
 
 def main() -> int:
-    print("multicap — Phase 6 synchronizer and job runner.")
+    print("multicap — Phase 7 collectors, clock alignment, and correlator facade.")
     return 0
 
 
