@@ -42,11 +42,15 @@ net = [
     "textfsm>=1.1",
     "ntc-templates>=6.0",
     "pydantic>=2.8",
-    "keyring>=25.0",
 ]
 
 [project.scripts]
 multicap = "multicap.__main__:main"
+golden-capture = "multicap.testkit.golden_capture:main"
+
+[project.entry-points."multicap.drivers"]
+iosxe-switch = "multicap.drivers.iosxe_switch:create_driver"
+nxos = "multicap.drivers.nxos:create_driver"
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
@@ -54,6 +58,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"multicap.testkit.golden" = ["*.json"]
 
 # ------------------------------------------------------------------
 # Ruff — lint + format (§3)
