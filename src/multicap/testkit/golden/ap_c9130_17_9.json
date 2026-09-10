@@ -1,0 +1,9 @@
+{
+  "features": {
+    "peekremote": true,
+    "sniffer_mode": true
+  },
+  "os_family": "ap-ios-xe",
+  "platform": "ap",
+  "release_train": "17.9"
+}

@@ -47,4 +47,4 @@ def test_capability_registry_probes_device_profile() -> None:
 def test_driver_entry_points_are_discoverable() -> None:
     drivers = discover_drivers()
 
-    assert sorted(drivers) == ["iosxe-switch", "iosxe-wlc", "nxos"]
+    assert sorted(drivers) == ["ap", "iosxe-switch", "iosxe-wlc", "nxos"]
