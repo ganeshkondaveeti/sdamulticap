@@ -1,6 +1,6 @@
 # Cisco Multi-Platform Synchronized Packet-Capture Orchestrator (`multicap`)
 
-Phase 0 scaffold. This repository is under active planning. Authoritative docs live under [`docs/`](./docs/).
+Phase 1 substrate. This repository now contains the transport and persistence foundation described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §6.
 
 ## Read First
 
@@ -14,9 +14,9 @@ Phase 0 scaffold. This repository is under active planning. Authoritative docs l
 | [`docs/stack-decision.md`](./docs/stack-decision.md) | ADR-001 — PySide6/Python over Electron/TS |
 | [`docs/edge-cases.md`](./docs/edge-cases.md) | Edge cases & failure modes |
 
-## Phase 0 Status
+## Phase 1 Status
 
-This checkout contains the repository skeleton required by [`docs/implementation-plan.md`](./docs/implementation-plan.md) §2 and the Phase 0 toolchain per §3. Runtime code lands in Phase 1 onwards.
+This checkout contains the Phase 0 delivery machinery plus the Phase 1 transport/persistence substrate: mockable SSH execution pool, RESTCONF/NETCONF/SNMP/SCP wrappers, SQLite WAL journal, hash-chained audit log, and retention-pruned pcapng store.
 
 ## Bootstrapping (Phase 0)
 
@@ -26,6 +26,14 @@ uv run ruff check .
 uv run mypy
 uv run pytest -m unit
 ```
+
+## Phase 1 Demo
+
+```bash
+uv run python tools/phase1_demo.py
+```
+
+The demo drives the Phase 1 substrate without live devices: mock SSH exec, journal compensation replay, audit-chain verification, and pcapng storage.
 
 ## Release Artifacts (per §15, v1.6)
 
