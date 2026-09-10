@@ -1,0 +1,12 @@
+{
+  "features": {
+    "ap_capture_profile_definition": true,
+    "capwap_inner_filter": true,
+    "control_plane_capture": true,
+    "radioactive_trace": true,
+    "wireless_epc": true
+  },
+  "os_family": "ios-xe-wireless",
+  "platform": "iosxe-wlc",
+  "release_train": "17.12"
+}
