@@ -1,6 +1,6 @@
 # Cisco Multi-Platform Synchronized Packet-Capture Orchestrator (`multicap`)
 
-Phase 8a substrate. This repository now contains the transport/persistence foundation, wired discovery/planning/execution/correlation foundation, and the controller-side wireless foundations described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §13.
+Phase 8b substrate. This repository now contains the transport/persistence foundation, wired discovery/planning/execution/correlation foundation, controller-side wireless foundations, and AP sniffer/wireless-correlation slice described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §13b.
 
 ## Read First
 
@@ -14,9 +14,9 @@ Phase 8a substrate. This repository now contains the transport/persistence found
 | [`docs/stack-decision.md`](./docs/stack-decision.md) | ADR-001 — PySide6/Python over Electron/TS |
 | [`docs/edge-cases.md`](./docs/edge-cases.md) | Edge cases & failure modes |
 
-## Phase 8a Status
+## Phase 8b Status
 
-This checkout contains Phase 0 delivery machinery through Phase 7 wired execution/correlation plus Phase 8a wireless foundations: controller/AP/WLAN/client-location models, switching-mode-aware wireless path solver, FlexConnect/fabric wired-uplink redirects, IOS-XE 9800 controller driver stubs for wireless EPC, control-plane/CAPWAP-inner capture, AP capture profile definition, and radioactive tracing control.
+This checkout contains Phase 0 delivery machinery through Phase 8a plus Phase 8b AP sniffer and wireless correlation: AP capability probing, sniffer AP recommendation, sniffer consent/key-material disclosure, live-channel confirmation, AP mode transition driver, PEEKREMOTE normalization, CAPWAP inner/outer pairing, radioactive-trace fusion, and AP restoration assertion.
 
 ## Bootstrapping (Phase 0)
 
@@ -91,6 +91,14 @@ uv run python tools/phase8a_demo.py
 ```
 
 The demo resolves a wireless client location and produces a controller-side wireless plan with a FlexConnect wired-uplink redirect.
+
+## Phase 8b Demo
+
+```bash
+uv run python tools/phase8b_demo.py
+```
+
+The demo drives the mock three-domain wireless slice: AP sniffer action, wireless safety consent, PEEKREMOTE normalization, radioactive-trace fusion, and AP restoration verification.
 
 ## Release Artifacts (per §15, v1.6)
 

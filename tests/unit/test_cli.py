@@ -10,4 +10,4 @@ def test_phase0_cli_smoke(capsys: pytest.CaptureFixture[str]) -> None:
     assert main() == 0
 
     captured = capsys.readouterr()
-    assert "Phase 8a wireless discovery and 9800 controller capture" in captured.out
+    assert "Phase 8b AP sniffer and wireless correlation" in captured.out

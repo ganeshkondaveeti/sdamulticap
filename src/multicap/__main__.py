@@ -6,7 +6,7 @@ import sys
 
 
 def main() -> int:
-    print("multicap — Phase 8a wireless discovery and 9800 controller capture.")
+    print("multicap — Phase 8b AP sniffer and wireless correlation.")
     return 0
 
 
