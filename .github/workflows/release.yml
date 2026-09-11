@@ -58,12 +58,14 @@ jobs:
           test -n "$MACOS_KEYCHAIN_PASSWORD"
           CERT_PATH="$RUNNER_TEMP/multicap-developer-id.p12"
           KEYCHAIN_PATH="$RUNNER_TEMP/multicap-signing.keychain-db"
-          printf '%s' "$MACOS_CERTIFICATE_P12_BASE64" | tr -d '\r\n ' | base64 --decode > "$CERT_PATH"
-          test -s "$CERT_PATH"
+          uv run python -m multicap.release_tools MACOS_CERTIFICATE_P12_BASE64 "$CERT_PATH"
           security create-keychain -p "$MACOS_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$MACOS_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security import "$CERT_PATH" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH" || {
+            echo "Failed to import macOS signing certificate. MACOS_CERTIFICATE_P12_BASE64 must be a base64-encoded .p12/.pfx Developer ID Application certificate, and MACOS_CERTIFICATE_PASSWORD must match it."
+            exit 1
+          }
           security list-keychains -d user -s "$KEYCHAIN_PATH"
           security set-key-partition-list -S apple-tool:,apple: -s -k "$MACOS_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
       - name: materialize Windows signing certificate
@@ -74,8 +76,7 @@ jobs:
         run: |
           if (-not $env:WINDOWS_CERT_BASE64) { throw "WINDOWS_CERT_BASE64 secret is required" }
           $certPath = Join-Path $env:RUNNER_TEMP "multicap-codesign.pfx"
-          $encoded = ($env:WINDOWS_CERT_BASE64 -replace '\s','')
-          [IO.File]::WriteAllBytes($certPath, [Convert]::FromBase64String($encoded))
+          uv run python -m multicap.release_tools WINDOWS_CERT_BASE64 $certPath
           "WINDOWS_CERT_PATH=$certPath" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: import Linux signing key
         if: runner.os == 'Linux'
@@ -83,7 +84,12 @@ jobs:
           LINUX_GPG_PRIVATE_KEY_BASE64: ${{ secrets.LINUX_GPG_PRIVATE_KEY_BASE64 }}
         run: |
           test -n "$LINUX_GPG_PRIVATE_KEY_BASE64"
-          printf '%s' "$LINUX_GPG_PRIVATE_KEY_BASE64" | tr -d '\r\n ' | base64 --decode | gpg --batch --import
+          KEY_PATH="$RUNNER_TEMP/multicap-linux-signing-key.asc"
+          uv run python -m multicap.release_tools LINUX_GPG_PRIVATE_KEY_BASE64 "$KEY_PATH" --allow-raw
+          gpg --batch --import "$KEY_PATH" || {
+            echo "Failed to import Linux signing key. LINUX_GPG_PRIVATE_KEY_BASE64 must be either a base64-encoded GPG private key or a raw ASCII-armored private key block."
+            exit 1
+          }
       - name: sync release dependencies
         run: uv sync --extra dev --extra ui --extra net
       - name: Phase 10 build, sign, notarize, SBOM
