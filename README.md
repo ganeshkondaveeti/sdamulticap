@@ -1,6 +1,6 @@
 # Cisco Multi-Platform Synchronized Packet-Capture Orchestrator (`multicap`)
 
-Phase 9 substrate. This repository now contains the transport/persistence foundation, wired discovery/planning/execution/correlation foundation, controller-side wireless foundations, AP sniffer/wireless-correlation slice, and evidence reporter/UI-polish surfaces described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §14.
+Phase 10 substrate. This repository now contains the transport/persistence foundation, wired discovery/planning/execution/correlation foundation, controller-side wireless foundations, AP sniffer/wireless-correlation slice, evidence reporter/UI-polish surfaces, and release packaging machinery described in [`docs/implementation-plan.md`](./docs/implementation-plan.md) §15.
 
 ## Read First
 
@@ -14,9 +14,9 @@ Phase 9 substrate. This repository now contains the transport/persistence founda
 | [`docs/stack-decision.md`](./docs/stack-decision.md) | ADR-001 — PySide6/Python over Electron/TS |
 | [`docs/edge-cases.md`](./docs/edge-cases.md) | Edge cases & failure modes |
 
-## Phase 9 Status
+## Phase 10 Status
 
-This checkout contains Phase 0 delivery machinery through Phase 8b plus Phase 9 reporting and polish: ladder diagram rows, HTML/PDF evidence bundle, Wireshark-compatible pcapng handoff, audit export, heuristic fault verdicts, NTP-degraded UX banners, retention usage rows, and the SC-9 wall-clock harness.
+This checkout contains Phase 0 delivery machinery through Phase 9 plus Phase 10 packaging: finalized PyInstaller one-folder spec for PySide6/Qt dynamic libraries, macOS `.dmg`, Windows `.exe` + `.msi`, Linux `.deb` + AppImage build paths, signing/notarization hooks, per-artifact SBOM generation, and the rollback/recall runbook.
 
 ## Bootstrapping (Phase 0)
 
@@ -119,6 +119,19 @@ Five signed artifacts from one git tag:
 | Windows | **`.msi`** | WiX + `signtool` |
 | Debian / Ubuntu | `.deb` | `dpkg-deb` + `dpkg-sig` |
 | Other Linux | AppImage | `appimagetool` + GPG |
+
+Build the host OS release artifacts from the current tag:
+
+```bash
+uv run python packaging/release.py --clean
+```
+
+Use `--unsigned-local` only for local smoke artifacts. See [`docs/release-runbook.md`](./docs/release-runbook.md) for signing, notarization, SBOM, rollback, and recall steps.
+
+## Contributors
+
+- [@sisyphus-dev-aiDori](https://github.com/sisyphus-dev-aiDori)
+- Ganesh Kondaveeti ([@ganeshkondaveeti](https://github.com/ganeshkondaveeti)) — repository owner
 
 ## License
 

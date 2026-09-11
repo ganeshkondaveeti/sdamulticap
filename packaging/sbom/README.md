@@ -12,3 +12,14 @@ Produces:
 
 - `ref/multicap.python.cdx.json` — CycloneDX package inventory from `uv.lock`
 - `ref/correlator_rs.rust.cdx.json` — CycloneDX package inventory from `Cargo.lock`
+
+## Release artifact SBOMs
+
+Phase 10 release builds write one SBOM per produced artifact:
+
+```bash
+uv run python packaging/release.py --clean
+```
+
+Outputs land under `artifacts/sbom/<artifact-name>.cdx.json` and include the
+artifact SHA-256 in the CycloneDX metadata component.
