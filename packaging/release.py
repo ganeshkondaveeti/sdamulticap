@@ -321,6 +321,7 @@ def sign_windows(path: Path) -> None:
     signtool = find_signtool()
     if signtool is None:
         raise SystemExit("signtool is required for signed Windows release artifacts")
+    timestamp_url = os.environ.get("WINDOWS_TIMESTAMP_URL") or "http://timestamp.digicert.com"
     _ = run(
         [
             signtool,
@@ -330,7 +331,7 @@ def sign_windows(path: Path) -> None:
             "/td",
             "SHA256",
             "/tr",
-            os.environ.get("WINDOWS_TIMESTAMP_URL", "http://timestamp.digicert.com"),
+            timestamp_url,
             "/f",
             os.environ["WINDOWS_CERT_PATH"],
             "/p",

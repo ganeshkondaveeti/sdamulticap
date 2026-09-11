@@ -27,6 +27,44 @@ Local unsigned smoke artifacts are allowed only before release-channel upload:
 uv run python packaging/release.py --clean --unsigned-local
 ```
 
+## Signing secret formats
+
+GitHub release secrets must contain the signing material itself, not a filename,
+key ID, or placeholder value.
+
+macOS certificate secret:
+
+```bash
+base64 -i DeveloperIDApplication.p12 | pbcopy
+# paste into MACOS_CERTIFICATE_P12_BASE64
+```
+
+The matching `.p12` password goes in `MACOS_CERTIFICATE_PASSWORD`, and
+`MACOS_SIGNING_IDENTITY` must match the Developer ID Application identity shown
+by `security find-identity -v -p codesigning`.
+
+Windows certificate secret:
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("codesign.pfx")) | Set-Clipboard
+# paste into WINDOWS_CERT_BASE64
+```
+
+The matching `.pfx` password goes in `WINDOWS_CERT_PASSWORD`. If
+`WINDOWS_TIMESTAMP_URL` is omitted or blank, the release builder uses
+`http://timestamp.digicert.com`.
+
+Linux signing key secret accepts either raw ASCII-armored private-key text or a
+base64-encoded private key export:
+
+```bash
+gpg --armor --export-secret-keys "$GPG_SIGNING_KEY_ID" | base64 -w0
+# paste into LINUX_GPG_PRIVATE_KEY_BASE64
+```
+
+The secret must be a private key block, not just the key ID. `GPG_SIGNING_KEY_ID`
+must identify that imported private key.
+
 ## Build and smoke
 
 Run on each OS runner from the same git tag:
