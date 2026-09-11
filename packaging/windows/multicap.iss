@@ -28,6 +28,9 @@ SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline dialog
+CloseApplications=yes
+CloseApplicationsFilter={#AppExeName}
+RestartApplications=no
 
 [Files]
 Source: "..\..\dist\multicap\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
@@ -37,3 +40,6 @@ Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExeName}"
 
 [Run]
 Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}"

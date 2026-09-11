@@ -165,14 +165,25 @@ jobs:
           } catch {
             $failure = $_
           } finally {
+            Get-Process multicap -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$installDir*" } | ForEach-Object {
+              Write-Host "Stopping lingering smoke process $($_.Id)..."
+              Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
+            }
             $uninst = Join-Path $installDir "unins000.exe"
             if (Test-Path $uninst) {
               Write-Host "Uninstalling..."
-              Start-Process -FilePath $uninst -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/CLOSEAPPLICATIONS" -Wait -NoNewWindow
+              Start-Process -FilePath $uninst -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/CLOSEAPPLICATIONS","/FORCECLOSEAPPLICATIONS","/LOG=inno-uninstall.log" -Wait -NoNewWindow
+            }
+            for ($attempt = 1; $attempt -le 20 -and (Test-Path $installDir); $attempt++) {
+              Start-Sleep -Milliseconds 500
+              Remove-Item -Recurse -Force $installDir -ErrorAction SilentlyContinue
             }
           }
           if ($failure) { throw $failure }
-          if (Test-Path (Join-Path $installDir "multicap.exe")) { throw "Uninstall left $installDir behind" }
+          if (Test-Path $installDir) {
+            Get-ChildItem $installDir -Recurse -Force -ErrorAction SilentlyContinue | Format-Table FullName,Length
+            throw "Uninstall left $installDir behind"
+          }
       - name: silent-install / launch / uninstall (.msi)
         shell: pwsh
         run: |
