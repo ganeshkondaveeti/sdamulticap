@@ -137,7 +137,7 @@ jobs:
         shell: pwsh
         run: |
           $bundle = (Resolve-Path dist\multicap).Path
-          candle packaging\windows\multicap.wxs packaging\windows\components.wxs -arch x64 -dSourceDir="$bundle" -out packaging\windows\
+          candle packaging\windows\multicap.wxs packaging\windows\components.wxs -arch x64 -dSourceDir="$bundle" -dProductVersion="0.0.0" -out packaging\windows\
           light packaging\windows\multicap.wixobj packaging\windows\components.wixobj -out packaging\windows\multicap.msi
       # v1.6 §5 Phase 0 exit — silent-install + launch + uninstall smoke for BOTH artifacts.
       - name: silent-install / launch / uninstall (.exe)
