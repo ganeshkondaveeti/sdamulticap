@@ -16,6 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - uses: dtolnay/rust-toolchain@stable
@@ -25,7 +26,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            dpkg-sig \
             libegl1 \
             libgl1 \
             libxkbcommon-x11-0 \
@@ -58,7 +58,8 @@ jobs:
           test -n "$MACOS_KEYCHAIN_PASSWORD"
           CERT_PATH="$RUNNER_TEMP/multicap-developer-id.p12"
           KEYCHAIN_PATH="$RUNNER_TEMP/multicap-signing.keychain-db"
-          echo "$MACOS_CERTIFICATE_P12_BASE64" | base64 --decode > "$CERT_PATH"
+          printf '%s' "$MACOS_CERTIFICATE_P12_BASE64" | tr -d '\r\n ' | base64 --decode > "$CERT_PATH"
+          test -s "$CERT_PATH"
           security create-keychain -p "$MACOS_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$MACOS_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
@@ -73,7 +74,8 @@ jobs:
         run: |
           if (-not $env:WINDOWS_CERT_BASE64) { throw "WINDOWS_CERT_BASE64 secret is required" }
           $certPath = Join-Path $env:RUNNER_TEMP "multicap-codesign.pfx"
-          [IO.File]::WriteAllBytes($certPath, [Convert]::FromBase64String($env:WINDOWS_CERT_BASE64))
+          $encoded = ($env:WINDOWS_CERT_BASE64 -replace '\s','')
+          [IO.File]::WriteAllBytes($certPath, [Convert]::FromBase64String($encoded))
           "WINDOWS_CERT_PATH=$certPath" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: import Linux signing key
         if: runner.os == 'Linux'
@@ -81,7 +83,7 @@ jobs:
           LINUX_GPG_PRIVATE_KEY_BASE64: ${{ secrets.LINUX_GPG_PRIVATE_KEY_BASE64 }}
         run: |
           test -n "$LINUX_GPG_PRIVATE_KEY_BASE64"
-          echo "$LINUX_GPG_PRIVATE_KEY_BASE64" | base64 --decode | gpg --batch --import
+          printf '%s' "$LINUX_GPG_PRIVATE_KEY_BASE64" | tr -d '\r\n ' | base64 --decode | gpg --batch --import
       - name: sync release dependencies
         run: uv sync --extra dev --extra ui --extra net
       - name: Phase 10 build, sign, notarize, SBOM

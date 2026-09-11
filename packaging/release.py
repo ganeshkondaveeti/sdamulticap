@@ -318,7 +318,7 @@ def build_windows_installers(version: str, *, sign: bool) -> list[Path]:
 def sign_windows(path: Path) -> None:
     require_env("WINDOWS_CERT_PATH")
     require_env("WINDOWS_CERT_PASSWORD")
-    signtool = which("signtool")
+    signtool = find_signtool()
     if signtool is None:
         raise SystemExit("signtool is required for signed Windows release artifacts")
     _ = run(
@@ -372,11 +372,7 @@ def build_deb(bundle: Path, version: str, *, sign: bool) -> Path:
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
     _ = run(["dpkg-deb", "--build", str(pkgroot), str(deb)])
     if sign:
-        require_env("DPKG_SIG_KEY_ID")
-        dpkg_sig = which("dpkg-sig")
-        if dpkg_sig is None:
-            raise SystemExit("dpkg-sig is required for signed Debian release artifacts")
-        _ = run([dpkg_sig, "--sign", "builder", "-k", os.environ["DPKG_SIG_KEY_ID"], str(deb)])
+        _ = sign_linux_artifact(deb)
     return deb
 
 
@@ -402,20 +398,28 @@ def build_appimage(bundle: Path, version: str, *, sign: bool) -> Path:
     env["ARCH"] = "x86_64"
     _ = run([appimagetool, str(appdir), str(appimage)], env=env)
     if sign:
-        require_env("GPG_SIGNING_KEY_ID")
-        _ = run(
-            [
-                "gpg",
-                "--batch",
-                "--yes",
-                "--detach-sign",
-                "--armor",
-                "--local-user",
-                os.environ["GPG_SIGNING_KEY_ID"],
-                str(appimage),
-            ]
-        )
+        _ = sign_linux_artifact(appimage)
     return appimage
+
+
+def sign_linux_artifact(path: Path) -> Path:
+    require_env("GPG_SIGNING_KEY_ID")
+    signature = Path(f"{path}.asc")
+    _ = run(
+        [
+            "gpg",
+            "--batch",
+            "--yes",
+            "--detach-sign",
+            "--armor",
+            "--local-user",
+            os.environ["GPG_SIGNING_KEY_ID"],
+            "--output",
+            str(signature),
+            str(path),
+        ]
+    )
+    return signature
 
 
 def write_artifact_sbom(artifact: Path, version: str) -> Path:
@@ -516,6 +520,28 @@ def first_existing(paths: Iterable[Path]) -> Path:
 
 def which(name: str) -> str | None:
     return shutil.which(name)
+
+
+def find_signtool() -> str | None:
+    candidate = which("signtool")
+    if candidate is not None:
+        return candidate
+    if sys.platform != "win32":
+        return None
+    roots = [
+        Path(os.environ.get("PROGRAMFILES(X86)", "")) / "Windows Kits" / "10" / "bin",
+        Path(os.environ.get("PROGRAMFILES", "")) / "Windows Kits" / "10" / "bin",
+    ]
+    matches: list[Path] = []
+    for root in roots:
+        if root.exists():
+            matches.extend(root.glob("*/*/signtool.exe"))
+            matches.extend(root.glob("*/signtool.exe"))
+    preferred = [path for path in matches if path.parent.name.lower() == "x64"]
+    selected = sorted(preferred or matches, reverse=True)
+    if not selected:
+        return None
+    return str(selected[0])
 
 
 def run(

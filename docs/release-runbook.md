@@ -19,7 +19,7 @@ Release hosts and required tools:
 |---|---|---|---|
 | macOS | `.dmg` | PyInstaller, `hdiutil`, `codesign`, `xcrun notarytool` | `SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD` |
 | Windows | `.exe`, `.msi` | PyInstaller, Inno Setup, WiX Toolset, `signtool` | `WINDOWS_CERT_PATH`, `WINDOWS_CERT_PASSWORD`, optional `WINDOWS_TIMESTAMP_URL` |
-| Linux | `.deb`, AppImage | PyInstaller, `dpkg-deb`, `dpkg-sig`, `appimagetool`, `gpg` | `DPKG_SIG_KEY_ID`, `GPG_SIGNING_KEY_ID` |
+| Linux | `.deb`, AppImage | PyInstaller, `dpkg-deb`, `appimagetool`, `gpg` | `GPG_SIGNING_KEY_ID` |
 
 Local unsigned smoke artifacts are allowed only before release-channel upload:
 
@@ -57,7 +57,7 @@ signtool verify /pa /all artifacts\*.exe
 signtool verify /pa /all artifacts\*.msi
 
 # Linux
-dpkg-sig --verify artifacts/*.deb
+gpg --verify artifacts/*.deb.asc artifacts/*.deb
 gpg --verify artifacts/*.AppImage.asc artifacts/*.AppImage
 ```
 
