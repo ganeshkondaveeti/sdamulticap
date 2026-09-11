@@ -92,6 +92,8 @@ jobs:
         run: uv sync --extra dev --extra ui --extra net
       - name: build one-folder bundle
         run: uv run --with pyinstaller pyinstaller packaging/pyinstaller/multicap.spec --noconfirm
+      - name: verify bundled qt-material resources
+        run: uv run python -c "from pathlib import Path; roots=[Path('dist/multicap/_internal'), Path('dist/MultiCap.app/Contents/Resources')]; expected=[root/'qt_material/resources/source/checkbox_indeterminate.svg' for root in roots]; found=[str(path) for path in expected if path.exists()]; assert found, expected; print(found[0])"
       - name: smoke — launch bundled binary
         shell: bash
         run: |
@@ -114,6 +116,8 @@ jobs:
         run: uv sync --extra dev --extra ui --extra net
       - name: build one-folder bundle
         run: uv run --with pyinstaller pyinstaller packaging/pyinstaller/multicap.spec --noconfirm
+      - name: verify bundled qt-material resources
+        run: uv run python -c "from pathlib import Path; expected=Path('dist/multicap/_internal/qt_material/resources/source/checkbox_indeterminate.svg'); assert expected.exists(), expected; print(expected)"
       # v1.6 dual Windows path — §5 Phase 0 smoke requires BOTH artifacts to build.
       - name: install Inno Setup
         run: choco install innosetup --no-progress -y
@@ -145,34 +149,56 @@ jobs:
         run: |
           $exe = Get-ChildItem packaging\windows\Output\*.exe | Select-Object -First 1
           if (-not $exe) { throw "Inno Setup .exe not found under packaging\windows\Output\" }
+          $installDir = Join-Path $env:RUNNER_TEMP "multicap-inno-install"
+          Remove-Item -Recurse -Force $installDir -ErrorAction SilentlyContinue
+          $failure = $null
           Write-Host "Installing $($exe.FullName) silently..."
-          Start-Process -FilePath $exe.FullName -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/LOG=inno-install.log" -Wait -NoNewWindow
-          $searchRoots = @($env:LOCALAPPDATA, $env:ProgramFiles, ${env:ProgramFiles(x86)}) | Where-Object { $_ -and (Test-Path $_) }
-          $installed = $searchRoots | ForEach-Object { Get-ChildItem $_ -Recurse -Filter multicap.exe -ErrorAction SilentlyContinue } | Select-Object -First 1
-          if (-not $installed) { throw "Installed binary not found under expected install roots" }
-          Write-Host "Launching installed binary..."
-          $output = & $installed.FullName --smoke
-          if ($output -notmatch "multicap GUI smoke ok") { throw "Unexpected launch output: $output" }
-          $uninst = $searchRoots | ForEach-Object { Get-ChildItem $_ -Recurse -Filter unins000.exe -ErrorAction SilentlyContinue } | Select-Object -First 1
-          if (-not $uninst) { throw "Uninstaller not found under expected install roots" }
-          Write-Host "Uninstalling..."
-          Start-Process -FilePath $uninst.FullName -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART" -Wait -NoNewWindow
-          if (Test-Path $installed.FullName) { throw "Uninstall left $($installed.FullName) behind" }
+          try {
+            Start-Process -FilePath $exe.FullName -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/DIR=$installDir","/LOG=inno-install.log" -Wait -NoNewWindow
+            $installed = Join-Path $installDir "multicap.exe"
+            if (-not (Test-Path $installed)) { throw "Installed binary not found at $installed" }
+            $resource = Join-Path $installDir "_internal\qt_material\resources\source\checkbox_indeterminate.svg"
+            if (-not (Test-Path $resource)) { throw "qt-material source SVG not installed at $resource" }
+            Write-Host "Launching installed binary..."
+            $output = & $installed --smoke
+            if ($output -notmatch "multicap GUI smoke ok") { throw "Unexpected launch output: $output" }
+          } catch {
+            $failure = $_
+          } finally {
+            $uninst = Join-Path $installDir "unins000.exe"
+            if (Test-Path $uninst) {
+              Write-Host "Uninstalling..."
+              Start-Process -FilePath $uninst -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/CLOSEAPPLICATIONS" -Wait -NoNewWindow
+            }
+          }
+          if ($failure) { throw $failure }
+          if (Test-Path (Join-Path $installDir "multicap.exe")) { throw "Uninstall left $installDir behind" }
       - name: silent-install / launch / uninstall (.msi)
         shell: pwsh
         run: |
           $msi = "packaging\windows\multicap.msi"
           if (-not (Test-Path $msi)) { throw "MSI not built at $msi" }
+          $installDir = Join-Path $env:RUNNER_TEMP "multicap-msi-install"
+          Remove-Item -Recurse -Force $installDir -ErrorAction SilentlyContinue
+          $failure = $null
           Write-Host "Installing $msi silently..."
-          Start-Process msiexec -ArgumentList "/i","$msi","/qn","/norestart","/L*V","msi-install.log" -Wait -NoNewWindow
-          $installed = "C:\Program Files\multicap\multicap.exe"
-          if (-not (Test-Path $installed)) { throw "Installed binary not found at $installed" }
-          Write-Host "Launching installed binary..."
-          $output = & $installed --smoke
-          if ($output -notmatch "multicap GUI smoke ok") { throw "Unexpected launch output: $output" }
-          Write-Host "Uninstalling..."
-          Start-Process msiexec -ArgumentList "/x","$msi","/qn","/norestart" -Wait -NoNewWindow
-          if (Test-Path $installed) { throw "Uninstall left $installed behind" }
+          try {
+            Start-Process msiexec -ArgumentList "/i","$msi","/qn","/norestart","INSTALLFOLDER=$installDir","/L*V","msi-install.log" -Wait -NoNewWindow
+            $installed = Join-Path $installDir "multicap.exe"
+            if (-not (Test-Path $installed)) { throw "Installed binary not found at $installed" }
+            $resource = Join-Path $installDir "_internal\qt_material\resources\source\checkbox_indeterminate.svg"
+            if (-not (Test-Path $resource)) { throw "qt-material source SVG not installed at $resource" }
+            Write-Host "Launching installed binary..."
+            $output = & $installed --smoke
+            if ($output -notmatch "multicap GUI smoke ok") { throw "Unexpected launch output: $output" }
+          } catch {
+            $failure = $_
+          } finally {
+            Write-Host "Uninstalling..."
+            Start-Process msiexec -ArgumentList "/x","$msi","/qn","/norestart" -Wait -NoNewWindow
+          }
+          if ($failure) { throw $failure }
+          if (Test-Path (Join-Path $installDir "multicap.exe")) { throw "Uninstall left $installDir behind" }
 
   sbom-baseline:
     name: SBOM baseline check (§5 R6)
