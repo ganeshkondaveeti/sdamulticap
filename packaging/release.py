@@ -135,6 +135,7 @@ def build_pyinstaller() -> Path:
     else:
         bundle = DIST / APP_NAME
     require_exists(bundle)
+    assert_bundle_resources(bundle)
     return bundle
 
 
@@ -152,6 +153,15 @@ def smoke_bundle(bundle: Path) -> None:
     output = completed.stdout + completed.stderr
     if "multicap GUI smoke ok" not in output:
         raise SystemExit(f"Bundled smoke did not report success:\n{output}")
+
+
+def assert_bundle_resources(bundle: Path) -> None:
+    if sys.platform == "darwin" and bundle.suffix == ".app":
+        resource_root = bundle / "Contents" / "Resources"
+    else:
+        resource_root = bundle / "_internal"
+    expected = resource_root / "qt_material" / "resources" / "source" / "checkbox_indeterminate.svg"
+    require_exists(expected)
 
 
 def build_macos_dmg(version: str, *, sign: bool) -> Path:

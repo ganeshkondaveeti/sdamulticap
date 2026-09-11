@@ -14,6 +14,15 @@ block_cipher = None
 project_root = Path.cwd()
 
 qt_material_datas, qt_material_binaries, qt_material_hiddenimports = collect_all("qt_material")
+qt_material_resource_datas = collect_data_files(
+    "qt_material",
+    includes=[
+        "resources/*.py",
+        "resources/logo/*",
+        "resources/source/*.svg",
+        "themes/*.xml",
+    ],
+)
 qt_plugin_datas = collect_data_files(
     "PySide6",
     includes=[
@@ -44,7 +53,7 @@ a = Analysis(
     [str(project_root / "src" / "multicap" / "__main__.py")],
     pathex=[str(project_root / "src")],
     binaries=[*qt_material_binaries],
-    datas=[*qt_material_datas, *qt_plugin_datas],
+    datas=[*qt_material_datas, *qt_material_resource_datas, *qt_plugin_datas],
     hiddenimports=hiddenimports,
     hookspath=[],
     runtime_hooks=[],
