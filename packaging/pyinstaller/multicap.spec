@@ -1,19 +1,51 @@
 # PyInstaller one-folder spec — cross-OS single source, per-OS branches.
 # Consumed by all three Phase 10 installers (§15) and the Phase 0 smoke (§5).
 # Build: `pyinstaller packaging/pyinstaller/multicap.spec`
+#
+# PySide6 is LGPL: keep one-folder dynamic Qt libraries visible beside the app.
+# Do not switch to one-file mode without a new licensing review.
 
 import sys
 from pathlib import Path
 
+from PyInstaller.utils.hooks import collect_all, collect_data_files, collect_submodules
+
 block_cipher = None
 project_root = Path.cwd()
+
+qt_material_datas, qt_material_binaries, qt_material_hiddenimports = collect_all("qt_material")
+qt_plugin_datas = collect_data_files(
+    "PySide6",
+    includes=[
+        "Qt/plugins/iconengines/*",
+        "Qt/plugins/imageformats/*",
+        "Qt/plugins/platforms/*",
+        "Qt/plugins/platformthemes/*",
+        "Qt/plugins/styles/*",
+        "Qt/plugins/tls/*",
+        "Qt/translations/qtbase_*.qm",
+    ],
+)
+hiddenimports = sorted(
+    {
+        "multicap",
+        "PySide6.QtCore",
+        "PySide6.QtGui",
+        "PySide6.QtNetwork",
+        "PySide6.QtPrintSupport",
+        "PySide6.QtSvg",
+        "PySide6.QtWidgets",
+        *collect_submodules("multicap"),
+        *qt_material_hiddenimports,
+    }
+)
 
 a = Analysis(
     [str(project_root / "src" / "multicap" / "__main__.py")],
     pathex=[str(project_root / "src")],
-    binaries=[],
-    datas=[],
-    hiddenimports=["multicap"],
+    binaries=[*qt_material_binaries],
+    datas=[*qt_material_datas, *qt_plugin_datas],
+    hiddenimports=hiddenimports,
     hookspath=[],
     runtime_hooks=[],
     excludes=[],
@@ -57,7 +89,16 @@ coll = COLLECT(
 if sys.platform == "darwin":
     app = BUNDLE(
         coll,
-        name="multicap.app",
+        name="MultiCap.app",
         icon=None,
         bundle_identifier="com.cisco.multicap",
+        info_plist={
+            "CFBundleDisplayName": "MultiCap",
+            "CFBundleName": "MultiCap",
+            "CFBundleShortVersionString": "0.0.0",
+            "CFBundleVersion": "0.0.0",
+            "LSMinimumSystemVersion": "12.0",
+            "NSHighResolutionCapable": "True",
+            "NSPrincipalClass": "NSApplication",
+        },
     )
