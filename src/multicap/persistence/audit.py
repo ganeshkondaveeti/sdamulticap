@@ -125,8 +125,7 @@ class AuditLog:
 
     def _last_hash(self, connection: sqlite3.Connection) -> str:
         row = _fetch_optional_string_row(
-            connection,
-            "SELECT entry_hash FROM audit_records ORDER BY id DESC LIMIT 1"
+            connection, "SELECT entry_hash FROM audit_records ORDER BY id DESC LIMIT 1"
         )
         if row is None:
             return GENESIS_HASH
@@ -154,9 +153,7 @@ class AuditLog:
         return hashlib.sha256(canonical.encode()).hexdigest()
 
 
-def _fetch_optional_string_row(
-    connection: sqlite3.Connection, sql: str
-) -> tuple[str] | None:
+def _fetch_optional_string_row(connection: sqlite3.Connection, sql: str) -> tuple[str] | None:
     fetched = cast(object, connection.execute(sql).fetchone())
     if fetched is None:
         return None
