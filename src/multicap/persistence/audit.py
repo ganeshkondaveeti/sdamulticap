@@ -3,8 +3,11 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+from collections.abc import Generator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 from multicap.persistence.journal import reject_secret_material, utc_now
 
@@ -24,13 +27,13 @@ class AuditRecord:
 
 class AuditLog:
     def __init__(self, path: Path) -> None:
-        self.path = path
+        self.path: Path = path
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._initialize()
 
     def append(self, *, job_id: str, event: str, payload: dict[str, object]) -> AuditRecord:
         reject_secret_material(payload)
-        with self._connect() as connection:
+        with self._connection() as connection:
             previous = self._last_hash(connection)
             ts = utc_now()
             entry_hash = self._hash(ts, job_id, event, payload, previous)
@@ -55,22 +58,12 @@ class AuditLog:
             )
 
     def records(self) -> list[AuditRecord]:
-        with self._connect() as connection:
-            rows = connection.execute(
+        with self._connection() as connection:
+            fetched: object = connection.execute(
                 "SELECT id, ts, job_id, event, payload, previous_hash, entry_hash FROM audit_records ORDER BY id"
-            )
-            return [
-                AuditRecord(
-                    id=row["id"],
-                    ts=row["ts"],
-                    job_id=row["job_id"],
-                    event=row["event"],
-                    payload=json.loads(row["payload"]),
-                    previous_hash=row["previous_hash"],
-                    entry_hash=row["entry_hash"],
-                )
-                for row in rows
-            ]
+            ).fetchall()
+            rows = cast(list[tuple[int, str, str, str, str, str, str]], fetched)
+            return [self._row_to_record(row) for row in rows]
 
     def verify(self) -> bool:
         previous = GENESIS_HASH
@@ -89,9 +82,9 @@ class AuditLog:
         return True
 
     def _initialize(self) -> None:
-        with self._connect() as connection:
-            connection.execute("PRAGMA journal_mode=WAL")
-            connection.execute(
+        with self._connection() as connection:
+            _ = connection.execute("PRAGMA journal_mode=WAL")
+            _ = connection.execute(
                 """
                 CREATE TABLE IF NOT EXISTS audit_records(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -106,17 +99,38 @@ class AuditLog:
             )
 
     def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.path)
-        connection.row_factory = sqlite3.Row
-        return connection
+        return sqlite3.connect(self.path)
+
+    @contextmanager
+    def _connection(self) -> Generator[sqlite3.Connection, None, None]:
+        connection = self._connect()
+        try:
+            with connection:
+                yield connection
+        finally:
+            connection.close()
+
+    def _row_to_record(self, row: tuple[int, str, str, str, str, str, str]) -> AuditRecord:
+        record_id, ts, job_id, event, raw_payload, previous_hash, entry_hash = row
+        payload = cast(dict[str, object], json.loads(raw_payload))
+        return AuditRecord(
+            id=record_id,
+            ts=ts,
+            job_id=job_id,
+            event=event,
+            payload=payload,
+            previous_hash=previous_hash,
+            entry_hash=entry_hash,
+        )
 
     def _last_hash(self, connection: sqlite3.Connection) -> str:
-        row = connection.execute(
+        row = _fetch_optional_string_row(
+            connection,
             "SELECT entry_hash FROM audit_records ORDER BY id DESC LIMIT 1"
-        ).fetchone()
+        )
         if row is None:
             return GENESIS_HASH
-        return str(row["entry_hash"])
+        return row[0]
 
     def _hash(
         self,
@@ -138,3 +152,12 @@ class AuditLog:
             separators=(",", ":"),
         )
         return hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def _fetch_optional_string_row(
+    connection: sqlite3.Connection, sql: str
+) -> tuple[str] | None:
+    fetched = cast(object, connection.execute(sql).fetchone())
+    if fetched is None:
+        return None
+    return cast(tuple[str], fetched)

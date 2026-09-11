@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from collections.abc import Iterable
+from collections.abc import Generator, Iterable
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 
 JournalAction = Literal["apply", "revert"]
 SECRET_KEYS = frozenset({"password", "passwd", "secret", "token", "api_key", "private_key"})
@@ -29,7 +30,7 @@ def utc_now() -> str:
 
 class SessionJournal:
     def __init__(self, path: Path) -> None:
-        self.path = path
+        self.path: Path = path
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._initialize()
 
@@ -54,7 +55,7 @@ class SessionJournal:
         reject_secret_material(entry.payload)
         if entry.compensating_payload is not None:
             reject_secret_material(entry.compensating_payload)
-        with self._connect() as connection:
+        with self._connection() as connection:
             cursor = connection.execute(
                 """
                 INSERT INTO journal_entries(ts, job_id, device_id, action, payload, compensating_payload)
@@ -114,8 +115,10 @@ class SessionJournal:
             sql += " WHERE job_id = ?"
             params = (job_id,)
         sql += " ORDER BY id"
-        with self._connect() as connection:
-            return [self._row_to_entry(row) for row in connection.execute(sql, params)]
+        with self._connection() as connection:
+            fetched: object = connection.execute(sql, params).fetchall()
+            rows = cast(list[tuple[int, str, str, str, JournalAction, str, str | None]], fetched)
+            return [self._row_to_entry(row) for row in rows]
 
     def replay_compensations(self, job_id: str) -> list[JournalEntry]:
         replayed: list[JournalEntry] = []
@@ -124,10 +127,10 @@ class SessionJournal:
         return replayed
 
     def _initialize(self) -> None:
-        with self._connect() as connection:
-            connection.execute("PRAGMA journal_mode=WAL")
-            connection.execute("PRAGMA foreign_keys=ON")
-            connection.execute(
+        with self._connection() as connection:
+            _ = connection.execute("PRAGMA journal_mode=WAL")
+            _ = connection.execute("PRAGMA foreign_keys=ON")
+            _ = connection.execute(
                 """
                 CREATE TABLE IF NOT EXISTS journal_entries(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -140,26 +143,37 @@ class SessionJournal:
                 )
                 """
             )
-            connection.execute(
+            _ = connection.execute(
                 "CREATE INDEX IF NOT EXISTS idx_journal_job ON journal_entries(job_id, id)"
             )
 
     def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.path)
-        connection.row_factory = sqlite3.Row
-        return connection
+        return sqlite3.connect(self.path)
 
-    def _row_to_entry(self, row: sqlite3.Row) -> JournalEntry:
+    @contextmanager
+    def _connection(self) -> Generator[sqlite3.Connection, None, None]:
+        connection = self._connect()
+        try:
+            with connection:
+                yield connection
+        finally:
+            connection.close()
+
+    def _row_to_entry(
+        self, row: tuple[int, str, str, str, JournalAction, str, str | None]
+    ) -> JournalEntry:
+        entry_id, ts, job_id, device_id, action, raw_payload, raw_compensating = row
+        compensating_payload = None
+        if raw_compensating is not None:
+            compensating_payload = cast(dict[str, object], json.loads(raw_compensating))
         return JournalEntry(
-            id=row["id"],
-            ts=row["ts"],
-            job_id=row["job_id"],
-            device_id=row["device_id"],
-            action=row["action"],
-            payload=json.loads(row["payload"]),
-            compensating_payload=json.loads(row["compensating_payload"])
-            if row["compensating_payload"] is not None
-            else None,
+            id=entry_id,
+            ts=ts,
+            job_id=job_id,
+            device_id=device_id,
+            action=action,
+            payload=cast(dict[str, object], json.loads(raw_payload)),
+            compensating_payload=compensating_payload,
         )
 
 
@@ -172,10 +186,10 @@ def replay_all(journals: Iterable[SessionJournal], job_id: str) -> list[JournalE
 
 def reject_secret_material(payload: object) -> None:
     if isinstance(payload, dict):
-        for key, value in payload.items():
-            if key.lower() in SECRET_KEYS:
+        for key, value in cast(dict[object, object], payload).items():
+            if isinstance(key, str) and key.lower() in SECRET_KEYS:
                 raise ValueError(f"secret material cannot be persisted in journal payload: {key}")
             reject_secret_material(value)
     elif isinstance(payload, list | tuple):
-        for item in payload:
+        for item in cast(Iterable[object], payload):
             reject_secret_material(item)
