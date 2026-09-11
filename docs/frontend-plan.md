@@ -769,9 +769,9 @@ Frontend-specific decisions to resolve.
 2. **Topology graph library** — **Resolved by [ADR-001](./stack-decision.md) §4.1:** **NetworkX** for graph algorithms + layout, rendered through a `QGraphicsScene` with `QGraphicsItem` nodes/edges. No external JS graph library; benchmark on a 200-node topology still owed at Phase 3 kickoff to confirm layout latency.
 3. **Ladder diagram rendering** — **Resolved by [ADR-001](./stack-decision.md) §4.1:** custom `QGraphicsScene` items with SVG export via `QSvgGenerator` for the report bundle. Interactivity (click-to-drill) uses `QGraphicsItem::mousePressEvent`; performance on 10 k-packet captures mitigated via `QGraphicsItem::ItemUsesExtendedStyleOption` culling — benchmark checkpoint at Phase 9 kickoff.
 4. **Modal-free Plan Review** confirmed as the consent-UX pattern. Alternative modal-chain design is rejected here; revisit only if user-testing shows the review page is skipped. Consent gates are inline `QGroupBox` widgets, **not** `QDialog`s (see §11).
-5. **First-run consent copy** — legal review owner ([impl §16](./implementation-plan.md#16-cross-cutting-workstreams)); needs sign-off before Phase 10.
-6. **Enforcement-mode default** — ship as `advisory` (recommendation) or `enforced` (safer default). Product/legal call.
-7. **Multi-window support** — one Live Run per `QMainWindow` vs single-window tabbed (`QTabWidget`). Recommend single-window tabbed for v1; multi-window in v1.1.
+5. **First-run consent copy** — **Implemented as product draft** in `FirstRunConsentScreen`; legal sign-off remains a release-management gate before publishing signed artifacts.
+6. **Enforcement-mode default** — **Resolved for v1 UI:** render `ENFORCED` in the app shell and keep change-ticket/consent gates visible before execution. Product/legal can revisit default policy without changing the UI contract.
+7. **Multi-window support** — **Deferred to v1.1:** v1 uses single-window navigation with tabbed report/live-run surfaces.
 
 ---
 

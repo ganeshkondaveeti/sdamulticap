@@ -108,6 +108,10 @@ uv run python tools/phase9_demo.py
 
 The demo renders a mock evidence bundle with a ladder verdict, HTML/PDF artifacts, audit export, pcapng handoff, NTP-degraded banner, and SC-9 timing assertions.
 
+## Frontend Plan Status
+
+The PySide6 shell now exposes the remaining `docs/frontend-plan.md` surfaces after Phase 10: concrete Discovery, Intent, Jobs, Plan Review, Live Run, Reports, Audit, Settings, Search Palette, and first-run lawful-capture consent screens. Remaining project gates are release/legal/ops decisions: production legal approval of consent copy, signing-secret provisioning, lab-runner evidence for physical wireless E2E, and external release publishing.
+
 ## Release Artifacts (per §15, v1.6)
 
 Five signed artifacts from one git tag:
