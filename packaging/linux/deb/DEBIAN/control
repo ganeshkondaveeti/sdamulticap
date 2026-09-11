@@ -3,7 +3,8 @@ Version: 0.0.0
 Section: net
 Priority: optional
 Architecture: amd64
-Depends: libc6, libssl3
+Depends: libc6, libssl3, libgl1, libegl1, libxkbcommon-x11-0, libxcb-cursor0
 Maintainer: Multicap Contributors <maintainers@example.invalid>
 Description: Cisco Multi-Platform Synchronized Packet-Capture Orchestrator
- Phase 0 scaffold. See docs/implementation-plan.md.
+ PySide6 desktop app and synchronized packet-capture orchestration tools.
+ Built from the Phase 10 PyInstaller one-folder bundle.

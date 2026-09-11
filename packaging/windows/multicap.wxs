@@ -9,7 +9,7 @@
   <Product Id="*"
            Name="Multicap"
            Language="1033"
-           Version="0.0.0"
+           Version="$(var.ProductVersion)"
            Manufacturer="Multicap Contributors"
            UpgradeCode="5F5C1E4E-0000-0000-0000-000000000001">
 
