@@ -159,8 +159,17 @@ jobs:
             if (-not (Test-Path $installed)) { throw "Installed binary not found at $installed" }
             $resource = Join-Path $installDir "_internal\qt_material\resources\source\checkbox_indeterminate.svg"
             if (-not (Test-Path $resource)) { throw "qt-material source SVG not installed at $resource" }
+            $floatResource = Join-Path $installDir "_internal\qt_material\resources\source\float.svg"
+            if (-not (Test-Path $floatResource)) { throw "qt-material float SVG not installed at $floatResource" }
+            $svgCount = @(Get-ChildItem (Join-Path $installDir "_internal\qt_material\resources\source") -Filter *.svg).Count
+            if ($svgCount -lt 37) { throw "Expected at least 37 qt-material source SVGs, found $svgCount" }
             Write-Host "Launching installed binary..."
-            $output = & $installed --smoke
+            $stdout = Join-Path $env:RUNNER_TEMP "multicap-inno-smoke.out"
+            $stderr = Join-Path $env:RUNNER_TEMP "multicap-inno-smoke.err"
+            Remove-Item -Force $stdout,$stderr -ErrorAction SilentlyContinue
+            $process = Start-Process -FilePath $installed -ArgumentList "--smoke" -RedirectStandardOutput $stdout -RedirectStandardError $stderr -Wait -PassThru -NoNewWindow
+            $output = ((Get-Content $stdout,$stderr -Raw -ErrorAction SilentlyContinue) -join "`n")
+            if ($process.ExitCode -ne 0) { throw "Smoke exited $($process.ExitCode): $output" }
             if ($output -notmatch "multicap GUI smoke ok") { throw "Unexpected launch output: $output" }
           } catch {
             $failure = $_
@@ -199,8 +208,17 @@ jobs:
             if (-not (Test-Path $installed)) { throw "Installed binary not found at $installed" }
             $resource = Join-Path $installDir "_internal\qt_material\resources\source\checkbox_indeterminate.svg"
             if (-not (Test-Path $resource)) { throw "qt-material source SVG not installed at $resource" }
+            $floatResource = Join-Path $installDir "_internal\qt_material\resources\source\float.svg"
+            if (-not (Test-Path $floatResource)) { throw "qt-material float SVG not installed at $floatResource" }
+            $svgCount = @(Get-ChildItem (Join-Path $installDir "_internal\qt_material\resources\source") -Filter *.svg).Count
+            if ($svgCount -lt 37) { throw "Expected at least 37 qt-material source SVGs, found $svgCount" }
             Write-Host "Launching installed binary..."
-            $output = & $installed --smoke
+            $stdout = Join-Path $env:RUNNER_TEMP "multicap-msi-smoke.out"
+            $stderr = Join-Path $env:RUNNER_TEMP "multicap-msi-smoke.err"
+            Remove-Item -Force $stdout,$stderr -ErrorAction SilentlyContinue
+            $process = Start-Process -FilePath $installed -ArgumentList "--smoke" -RedirectStandardOutput $stdout -RedirectStandardError $stderr -Wait -PassThru -NoNewWindow
+            $output = ((Get-Content $stdout,$stderr -Raw -ErrorAction SilentlyContinue) -join "`n")
+            if ($process.ExitCode -ne 0) { throw "Smoke exited $($process.ExitCode): $output" }
             if ($output -notmatch "multicap GUI smoke ok") { throw "Unexpected launch output: $output" }
           } catch {
             $failure = $_
