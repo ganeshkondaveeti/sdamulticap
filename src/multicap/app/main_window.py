@@ -10,8 +10,10 @@ from PySide6.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QMainWindow,
+    QMenu,
     QStackedWidget,
     QToolBar,
+    QToolButton,
     QWidget,
 )
 
@@ -19,10 +21,15 @@ from multicap.app.demo_data import DemoUiState
 from multicap.app.widgets.placeholder import PlaceholderScreen, ScreenSpec
 from multicap.app.widgets.screens import (
     AuditScreen,
+    DiscoveryScreen,
+    FirstRunConsentScreen,
     HomeScreen,
+    IntentsScreen,
+    JobsScreen,
     LiveRunScreen,
     PlanReviewScreen,
     ReportsScreen,
+    SearchPalette,
     SettingsScreen,
 )
 
@@ -57,6 +64,11 @@ SCREEN_SPECS: tuple[ScreenSpec, ...] = (
         "settings",
         "Settings",
         "Retention, credentials, inventory adapters, enforcement, NTP, and telemetry.",
+    ),
+    ScreenSpec(
+        "firstRunConsent",
+        "First-Run Consent",
+        "Lawful-capture acknowledgement captured before packet-capture features are used.",
     ),
 )
 
@@ -114,8 +126,27 @@ class MainWindow(QMainWindow):
         _ = toolbar.addWidget(enforcement)
 
         active_jobs = QLabel("Active jobs: 0", toolbar)
+        active_jobs.setObjectName("activeJobsCounter")
         active_jobs.setAccessibleName("Active job counter")
         _ = toolbar.addWidget(active_jobs)
+
+        notifications = QToolButton(toolbar)
+        notifications.setText("Notifications: 2")
+        notifications.setObjectName("notificationsTray")
+        notifications.setAccessibleName("Notifications tray")
+        menu = QMenu(notifications)
+        _ = menu.addAction("NTP degraded on nx-1")
+        _ = menu.addAction("Wireless redirect planned for flex-local WLAN")
+        notifications.setMenu(menu)
+        notifications.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        _ = toolbar.addWidget(notifications)
+
+        search = QToolButton(toolbar)
+        search.setText("Search")
+        search.setObjectName("searchPaletteButton")
+        search.setAccessibleName("Search palette button")
+        _ = search.clicked.connect(self._show_search_palette)
+        _ = toolbar.addWidget(search)
 
         refresh = QAction("Refresh", self)
         refresh.setObjectName("refreshAction")
@@ -151,12 +182,21 @@ class MainWindow(QMainWindow):
         home = cast(HomeScreen, self._pages.widget(0))
         _ = home.new_path_button.clicked.connect(lambda: self._navigation.setCurrentRow(2))
         _ = home.new_client_button.clicked.connect(lambda: self._navigation.setCurrentRow(2))
+        intents = cast(IntentsScreen, self._pages.widget(2))
+        _ = intents.compile_path_button.clicked.connect(lambda: self._navigation.setCurrentRow(3))
+        _ = intents.compile_client_button.clicked.connect(lambda: self._navigation.setCurrentRow(3))
 
     def _page_for(self, spec: ScreenSpec) -> QWidget:
         if spec.key == "home":
             return HomeScreen(self._state, self._pages)
+        if spec.key == "discovery":
+            return DiscoveryScreen(self._state, self._pages)
+        if spec.key == "intents":
+            return IntentsScreen(self._state, self._pages)
         if spec.key == "planReview":
             return PlanReviewScreen(self._state, self._pages)
+        if spec.key == "jobs":
+            return JobsScreen(self._state, self._pages)
         if spec.key == "liveRun":
             return LiveRunScreen(self._state, self._pages)
         if spec.key == "reports":
@@ -165,7 +205,15 @@ class MainWindow(QMainWindow):
             return AuditScreen(self._state, self._pages)
         if spec.key == "settings":
             return SettingsScreen(self._state, self._pages)
+        if spec.key == "firstRunConsent":
+            return FirstRunConsentScreen(self._pages)
         return PlaceholderScreen(spec, self._pages)
+
+    def _show_search_palette(self) -> None:
+        palette = SearchPalette(tuple(spec.title for spec in SCREEN_SPECS), self)
+        palette.setWindowFlag(Qt.WindowType.Tool, True)
+        palette.resize(420, 320)
+        palette.show()
 
     def _restore_geometry(self) -> None:
         geometry = cast(object, self._settings.value("mainWindow/geometry"))

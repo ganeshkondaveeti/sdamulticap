@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QTableWidget,
     QTabWidget,
+    QToolButton,
     QWidget,
 )
 from pytestqt.qtbot import QtBot
@@ -51,6 +52,9 @@ def test_app_window_launches_with_sidebar_toolbar_and_expected_screens(qtbot: Qt
     ]
     assert find_required(window, QLabel, "statusPill") is not None
     assert find_required(window, QLabel, "badge") is not None
+    assert find_required(window, QLabel, "activeJobsCounter") is not None
+    assert find_required(window, QToolButton, "notificationsTray") is not None
+    assert find_required(window, QToolButton, "searchPaletteButton") is not None
     current_widget = window.pages.currentWidget()
     assert current_widget is not None
     assert current_widget.objectName() == "homeScreen"
@@ -95,6 +99,33 @@ def test_sidebar_navigation_switches_content_stack(qtbot: QtBot) -> None:
     assert current_widget is not None
     assert current_widget.objectName() == "intentsScreen"
 
+    compile_path = find_required(window, QPushButton, "compilePathIntentButton")
+    compile_path.click()
+    current_widget = window.pages.currentWidget()
+    assert current_widget is not None
+    assert current_widget.objectName() == "planReviewScreen"
+
+
+@pytest.mark.ui
+def test_discovery_intents_and_jobs_screens_are_concrete(qtbot: QtBot) -> None:
+    window = MainWindow()
+    qtbot.addWidget(window)
+
+    window.navigation.setCurrentRow(1)
+    discovery_progress = find_required(window, QProgressBar, "discoveryProgress")
+    device_table = find_required(window, QTableWidget, "deviceTable")
+    assert discovery_progress.value() == 72
+    assert device_table.rowCount() == 5
+    assert table_cell(device_table, 3, 0) == "wlc-9800-a"
+
+    window.navigation.setCurrentRow(2)
+    assert find_required(window, QPushButton, "compileClientIntentButton") is not None
+
+    window.navigation.setCurrentRow(4)
+    jobs_table = find_required(window, QTableWidget, "jobsTable")
+    assert jobs_table.rowCount() == 3
+    assert table_cell(jobs_table, 1, 1) == "Client aa:bb:cc:11:22:33"
+
 
 @pytest.mark.ui
 def test_plan_review_screen_binds_plan_safety_and_consent_rows(qtbot: QtBot) -> None:
@@ -118,6 +149,11 @@ def test_plan_review_screen_binds_plan_safety_and_consent_rows(qtbot: QtBot) -> 
     coverage = find_required(window, QLabel, "coverageGapBanner")
     change_ticket = find_required(window, QLineEdit, "changeTicketField")
     consent = find_required(window, QCheckBox, "fullPayloadConsentCheck")
+    sniffer = find_required(window, QCheckBox, "snifferConsentCheck-AP-3F-North")
+    disclosure = find_required(window, QCheckBox, "keyMaterialDisclosureCheck")
+    wireless_plan = find_required(window, QTableWidget, "wirelessPlanTable")
+    redirect = find_required(window, QLabel, "wirelessRedirectBanner")
+    wireless_safety = find_required(window, QLabel, "wirelessSafetySummary")
     assert isinstance(ntp, QLabel)
     assert isinstance(coverage, QLabel)
     assert isinstance(change_ticket, QLineEdit)
@@ -125,6 +161,12 @@ def test_plan_review_screen_binds_plan_safety_and_consent_rows(qtbot: QtBot) -> 
     assert coverage.text() == "No coverage gaps in the compiled plan."
     assert change_ticket.text() == "CHG-0004421"
     assert consent.accessibleName() == "Full-payload consent"
+    assert sniffer.isChecked()
+    assert disclosure.isChecked()
+    assert wireless_plan.rowCount() == 5
+    assert table_cell(wireless_plan, 4, 1) == "wired-redirect"
+    assert "flex-local" in redirect.text()
+    assert wireless_safety.text() == "allowed:AP-3F-North"
 
 
 @pytest.mark.ui
@@ -140,6 +182,9 @@ def test_live_run_screen_binds_status_rows(qtbot: QtBot) -> None:
     assert table_cell(live_table, 1, 1) == "ACTIVE"
     assert "cpu=18.0%" in table_cell(live_table, 1, 3)
     assert find_required(window, QPushButton, "abortJobButton") is not None
+    ap_diff = find_required(window, QTableWidget, "apStateDiffTable")
+    assert table_cell(ap_diff, 0, 0) == "AP-3F-North"
+    assert table_cell(ap_diff, 0, 1) == "yes"
 
 
 @pytest.mark.ui
@@ -154,12 +199,16 @@ def test_reports_settings_and_audit_screens_bind_backend_rows(qtbot: QtBot) -> N
     assert isinstance(report_tabs, QTabWidget)
     assert isinstance(exports_table, QTableWidget)
     assert isinstance(timeline_table, QTableWidget)
-    assert report_tabs.count() == 6
+    assert report_tabs.count() == 7
     assert exports_table.rowCount() == 1
     assert table_cell(exports_table, 0, 1) == "packet-loss:cat-2"
     assert table_cell(exports_table, 0, 4).endswith("merged.pcapng")
     assert timeline_table.rowCount() == 3
     assert table_cell(timeline_table, 2, 3) == "drops=2 truncated=1"
+
+    window.navigation.setCurrentRow(9)
+    first_run = find_required(window, QCheckBox, "firstRunConsentCheck")
+    assert first_run.accessibleName() == "First-run consent acknowledgement"
 
     window.navigation.setCurrentRow(8)
     assert find_required(window, QProgressBar, "retentionUsageBar") is not None
@@ -201,3 +250,18 @@ def test_important_widgets_have_accessible_names(qtbot: QtBot) -> None:
             missing.append(widget.objectName())
 
     assert missing == []
+
+
+@pytest.mark.ui
+def test_search_palette_opens_from_toolbar(qtbot: QtBot) -> None:
+    window = MainWindow()
+    qtbot.addWidget(window)
+    window.show()
+
+    search = find_required(window, QToolButton, "searchPaletteButton")
+    search.click()
+
+    palette = find_required(window, QWidget, "searchPalette")
+    results = find_required(window, QWidget, "searchPaletteResults")
+    assert palette.isVisible()
+    assert results.accessibleName() == "Search palette results"

@@ -18,6 +18,7 @@ from multicap.app.viewmodels import (
     timeline_rows,
 )
 from multicap.core.correlator_facade import CorrelationSummary
+from multicap.core.filters import FilterSpec
 from multicap.core.planner import CapturePlan, CaptureStrategy, PlanImpact
 from multicap.core.reporter import (
     EvidenceBundle,
@@ -30,6 +31,24 @@ from multicap.core.reporter import (
 from multicap.core.safety import DeviceHealth, SafetyGate
 from multicap.core.synchronizer import StatusEvent
 from multicap.core.topology import Device, Link, TopologyGraph
+from multicap.core.wireless import (
+    AccessPoint,
+    ApRestorationAssertion,
+    ApStateDiff,
+    ApStateSnapshot,
+    ClientLocation,
+    ClientLocationResolver,
+    SnifferApSelector,
+    SnifferCandidate,
+    SnifferConsentRecord,
+    WirelessCapturePlan,
+    WirelessController,
+    WirelessInventory,
+    WirelessPathSolver,
+    WirelessSafetyGate,
+    WirelessSafetyReport,
+    WlanProfile,
+)
 from multicap.drivers.base import CaptureFilter
 from multicap.persistence.audit import AuditLog, AuditRecord
 from multicap.persistence.settings import RetentionPruner, RetentionSettings
@@ -39,7 +58,32 @@ class DemoUiState:
     def __init__(self) -> None:
         self._tempdir: TemporaryDirectory[str] = TemporaryDirectory(prefix="multicap-ui-")
         self.root: Path = Path(self._tempdir.name)
+        self.topology: TopologyGraph = _demo_topology()
         self.plan: CapturePlan = _demo_plan()
+        self.inventory: WirelessInventory = _demo_wireless_inventory()
+        self.client_location: ClientLocation = ClientLocationResolver(self.inventory).resolve(
+            "aa:bb:cc:11:22:33"
+        )
+        self.wireless_plan: WirelessCapturePlan = WirelessPathSolver(
+            self.inventory, self.topology
+        ).solve_client_capture(
+            job_id="wireless-demo",
+            client_mac=self.client_location.client_mac,
+            filter_spec=FilterSpec(protocol="tcp", dst_port=443),
+        )
+        self.sniffer_candidates: list[SnifferCandidate] = SnifferApSelector().candidates(
+            self.inventory, self.client_location.controller_id
+        )
+        self.wireless_safety: WirelessSafetyReport = WirelessSafetyGate().evaluate(
+            self.client_location,
+            self.sniffer_candidates,
+            SnifferConsentRecord("wireless-demo", self.client_location.ap_name, "operator", True),
+            live_channel=self.client_location.channel,
+        )
+        self.ap_state_diff: ApStateDiff = ApRestorationAssertion().compare(
+            ApStateSnapshot(self.client_location.ap_name, "local", "5 GHz", 36, 80),
+            ApStateSnapshot(self.client_location.ap_name, "local", "5 GHz", 36, 80),
+        )
         self.precision: PrecisionStatus = PrecisionStatus(False, ("nx-1",), 500)
         self.health: dict[str, DeviceHealth] = {
             strategy.device.id: DeviceHealth(strategy.device.id, 18.0, 34.0, 4096, 0)
@@ -105,12 +149,7 @@ class DemoUiState:
 
 
 def _demo_plan() -> CapturePlan:
-    topology = TopologyGraph()
-    topology.add_device(Device("cat-1", "cat-1", "iosxe-switch", "ios-xe", "17.9", "192.0.2.1"))
-    topology.add_device(Device("nx-1", "nx-1", "nxos", "nx-os", "10.2", "192.0.2.2"))
-    topology.add_device(Device("cat-2", "cat-2", "iosxe-switch", "ios-xe", "17.9", "192.0.2.3"))
-    topology.add_link(Link("cat-1", "Gi1/0/1", "nx-1", "Eth1/1", "cdp"))
-    topology.add_link(Link("nx-1", "Eth1/2", "cat-2", "Gi1/0/1", "cdp"))
+    topology = _demo_topology()
     capture_filter = CaptureFilter("tcp and dst port 443")
     return CapturePlan(
         job_id="phase-ui-demo",
@@ -121,4 +160,59 @@ def _demo_plan() -> CapturePlan:
             CaptureStrategy("epc", topology.devices["cat-2"], "destination", capture_filter),
         ),
         impact=PlanImpact("low", "Native filtered on-box capture only."),
+    )
+
+
+def _demo_topology() -> TopologyGraph:
+    topology = TopologyGraph()
+    topology.add_device(Device("cat-1", "cat-1", "iosxe-switch", "ios-xe", "17.9", "192.0.2.1"))
+    topology.add_device(Device("nx-1", "nx-1", "nxos", "nx-os", "10.2", "192.0.2.2"))
+    topology.add_device(Device("cat-2", "cat-2", "iosxe-switch", "ios-xe", "17.9", "192.0.2.3"))
+    topology.add_device(
+        Device("wlc-9800-a", "WLC-9800-A", "iosxe-wlc", "ios-xe-wireless", "17.9", "192.0.2.10")
+    )
+    topology.add_device(
+        Device("edge-sw-3f", "EdgeSw-3F", "iosxe-switch", "ios-xe", "17.9", "192.0.2.11")
+    )
+    topology.add_link(Link("cat-1", "Gi1/0/1", "nx-1", "Eth1/1", "cdp"))
+    topology.add_link(Link("nx-1", "Eth1/2", "cat-2", "Gi1/0/1", "cdp"))
+    topology.add_link(Link("edge-sw-3f", "Gi1/0/24", "wlc-9800-a", "Te0/0/0", "lldp"))
+    return topology
+
+
+def _demo_wireless_inventory() -> WirelessInventory:
+    return WirelessInventory(
+        controllers={
+            "wlc-9800-a": WirelessController(
+                "wlc-9800-a", "WLC-9800-A", "192.0.2.10", "active", "17.9"
+            )
+        },
+        aps={
+            "AP-3F-North": AccessPoint(
+                "AP-3F-North",
+                "wlc-9800-a",
+                True,
+                "edge-sw-3f",
+                "Gi1/0/24",
+                1,
+                "5 GHz",
+                36,
+                80,
+                client_count=4,
+            ),
+            "AP-3F-South": AccessPoint(
+                "AP-3F-South",
+                "wlc-9800-a",
+                True,
+                "edge-sw-3f",
+                "Gi1/0/23",
+                1,
+                "5 GHz",
+                40,
+                80,
+                client_count=11,
+            ),
+        },
+        wlans={"corp-secure": WlanProfile("corp-secure", "corp-policy", 120, "flex-local")},
+        client_bindings={"aa:bb:cc:11:22:33": ("AP-3F-North", "corp-secure")},
     )
